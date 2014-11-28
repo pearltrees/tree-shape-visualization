@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+           xmlns:resources="com.broceliand.util.resources.*"
+           width="{PTFacepile.AVATAR_SIZE}"
+           height="{PTFacepile.AVATAR_SIZE}">
+   
+   <resources:RemoteImage id="avatar"
+                          width="{PTFacepile.AVATAR_SIZE}"
+                          height="{PTFacepile.AVATAR_SIZE}"/>
+   
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.pearlTree.io.object.util.facebookservice.util.FbFriendData;
+         import com.broceliand.util.resources.RemoteImage;
+         
+         private var _friend:FbFriendData;
+         
+         override protected function commitProperties():void {
+            super.commitProperties();
+            
+            if (processedDescriptors) {
+               var am:ApplicationManager = ApplicationManager.getInstance();
+               am.remoteResourceManagers.remoteImageManager.getRemoteResource(avatar, "http://graph.facebook.com/" + _friend.fbId + "/picture?type=square");
+            }
+         }
+         
+         override public function set data(value:Object):void {
+            super.data = value;
+            var newFriend:FbFriendData = value as FbFriendData;
+            if (_friend != newFriend) {
+               _friend = newFriend;
+               invalidateProperties();
+            }
+         }
+         
+         override public function get data():Object {
+            return _friend;
+         }
+         
+      ]]>
+   </mx:Script>
+</mx:Canvas>

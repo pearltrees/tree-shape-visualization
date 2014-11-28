@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="402" height="292" label="e">
+   <!--	
+   <mx:Label x="10" y="46" text="Link Size"/>
+   <mx:TextInput x="230" y="46" id="linkSize" editable="true" text="{layout.linkLength}" textAlign="right" />
+   
+   <mx:Label x="10" y="76" text="Rigidite du ressort"/>
+   <mx:TextInput x="230" y="76" id="rigidity" editable="true" text="{layout.rigidity}" textAlign="right"/>
+
+   <mx:Label x="10" y="106" text="Force de Repulsion"/>
+   <mx:TextInput x="230" y="106" id="repulsion" editable="true" textAlign="right" text="{layout.repulsionFactor}"/>
+   
+   <mx:Label x="10" y="134" text="Distance Minimal entre 2 perles"/>
+   <mx:TextInput x="230" y="134" id="minPearlDistance" editable="true" textAlign="right" text="{layout.minNodeSeparation}"/>
+
+   <mx:Label x="10" y="162" text="Portee max de force de repulsion"/>
+   <mx:TextInput x="230" y="162" id="maxRepulsionDistance" editable="true" textAlign="right" text="{layout.repulsionMaxRange}"/>
+
+   <mx:Label x="10" y="192" text="Force de retour a l'axe"/>
+   <mx:TextInput x="230" y="192" id="backForce" editable="true" textAlign="right"  text="{layout.torsionRigidity}"/>
+   <mx:Label x="10" y="10" text="Layout Settings" fontSize="16" fontWeight="bold"/>
+   <mx:Button x="325" y="260" label="Update" click="buttonClicked();"/>
+   <mx:CheckBox x="10" y="218" label="Force de frottement" id="damping" selected="{layout.dampingActive}" />
+   
+   <mx:Script>
+   <![CDATA[
+   import com.broceliand.util.Alert;
+   import mx.controls.Button;
+   import com.broceliand.graphLayout.layout.HierarchicalLayout;
+   import com.broceliand.graphLayout.layout.PTHierarchicalLayout;
+   [Bindable]
+   public var layout :PTHierarchicalLayout;
+
+   public function buttonClicked():void{
+   var ls:Number = parseInt(linkSize.text);
+   if (!isNaN( ls)) {
+   layout.linkLength=ls;
+   }
+   ls = parseFloat(rigidity.text);
+   if (!isNaN( ls)) {
+   layout.rigidity=ls;
+   }
+   ls = parseFloat(repulsion.text);
+   if (!isNaN( ls)) {
+   layout.repulsionFactor=ls;
+   }
+   ls = parseInt(minPearlDistance.text);
+   if (!isNaN( ls)) {
+   layout.minNodeSeparation=ls;
+   }
+   ls = parseInt(maxRepulsionDistance.text);
+   if (!isNaN( ls)) {
+   layout.repulsionMaxRange=ls;
+   } 
+   ls = parseFloat(backForce.text);
+   if (!isNaN( ls)) {
+   layout.torsionRigidity=ls;
+   }
+   layout.dampingActive = damping.selected;
+
+   }
+
+   ]]>
+   </mx:Script>
+   -->	
+</mx:Canvas>

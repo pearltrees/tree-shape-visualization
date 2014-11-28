@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+         xmlns:textInput="com.broceliand.ui.textInput.*"
+         xmlns:button="com.broceliand.ui.button.*"
+         creationComplete="onCreationComplete()"
+         verticalGap="-8" horizontalAlign="center"
+         width="{SEARCH_BOX_WIDTH}" xmlns:search="com.broceliand.ui.search.*"
+         verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:util="com.broceliand.ui.util.*">
+   <mx:Canvas width="100%">
+      <mx:Image id="backgroundAsset" 
+                source="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCHBOX_BACKGROUND)}" top="0"
+                width="100%" maintainAspectRatio="false" />
+      <mx:HBox id="buttonsAndTextContainer"
+               horizontalScrollPolicy="off" 
+               horizontalAlign="left" verticalAlign="middle"
+               horizontalGap="0" width="100%">
+         <button:PTButton id="modeButton" width="35" height="54"
+                          skin="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_BUTTON)}"
+                          overSkin="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_BUTTON_OVER)}"
+                          downSkin="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_BUTTON_OVER)}"
+                          disabledSkin="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_MAGNIFIER)}"
+                          click="onClickModeButton()"/>
+         <mx:Canvas id="noModeButtonContainer" creationPolicy="none">
+            <button:PTButton id="noModeButtonInNavBar" width="35" height="54" x="1"
+                             skin="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_ICON)}"
+                             disabledSkin="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_ICON)}"
+                             visible="false"
+                             includeInLayout="false" />
+            <button:PTButton id="noModeButtonInPanel" width="21" height="30" y="7"
+                             skin="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_ICON_IN_PANEL)}"
+                             disabledSkin="{AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_ICON_IN_PANEL)}"
+                             visible="false"
+                             includeInLayout="false" />
+         </mx:Canvas>
+         <textInput:PTTextInput id="searchInput" width="100%" height="100%"
+                                confirm="onClickSearch()"
+                                cancel="onCancelSearch()"
+                                focusOut="onFocusOutSearch()"
+                                fontSize="13" paddingBottom="0" paddingTop="14"
+                                borderSkin="{NullSkin}"
+                                focusSkin="{NullSkin}"
+                                displayDefaultText="true"
+                                textInput="onTextInput()" paddingLeft="0" 
+                                fontFamily="{PTStyleManager.SYSTEM_FONT_FAMILY}"
+                                color="{ColorPalette.getInstance().pearltreesColorForSystemFont}"/>
+         <!--
+         <button:PTButton id="okButton"
+         visible="false" includeInLayout="false"
+         height="30"
+         width="30"
+         upSkin="{AssetsManager.getEmbededAsset(SearchBoxAssets.OK)}"
+         downSkin="{AssetsManager.getEmbededAsset(SearchBoxAssets.OK_OVER)}"
+         overSkin="{AssetsManager.getEmbededAsset(SearchBoxAssets.OK_OVER)}"
+         skin="{SearchOkButtonRoundSkin}"
+         paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0"
+         letterSpacing="1" textAlign="center"
+         fontWeight="normal"
+         color="{ColorPalette.getInstance().backgroundColor}"
+         textRollOverColor="{ColorPalette.getInstance().backgroundColor}"
+         textSelectedColor="{ColorPalette.getInstance().backgroundColor}"
+         click="onClickSearch()"/>
+         -->
+      </mx:HBox>
+   </mx:Canvas>
+   <mx:VBox verticalGap="-3" width="100%" horizontalAlign="center" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+      <util:NonScrollableText id="message"
+                              selectable="false"
+                              width="100%" paddingLeft="13"
+                              visible="false" includeInLayout="false"
+                              fontWeight="bold" fontSize="11"
+                              color="{ColorPalette.getInstance().pearltreesDarkColor}" />
+      <util:NonScrollableText id="messageLine2"
+                              selectable="false"
+                              width="100%" paddingLeft="13"
+                              visible="false" includeInLayout="false"
+                              fontWeight="bold" fontSize="11"
+                              color="{ColorPalette.getInstance().pearltreesDarkColor}" />
+   </mx:VBox>
+   
+   <mx:Metadata>
+      [Event(name="search", type="flash.events.Event")]
+   </mx:Metadata>
+   
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.assets.NavBarAssets;
+         import com.broceliand.pearlTree.model.User;
+         import com.broceliand.pearlTree.navigation.INavigationManager;
+         import com.broceliand.pearlTree.navigation.NavigationEvent;
+         import com.broceliand.pearlTree.navigation.SearchEvent;
+         import com.broceliand.pearlTree.navigation.impl.NavigationDescription;
+         import com.broceliand.ui.PTStyleManager;
+         import com.broceliand.ui.controller.IWindowController;
+         import com.broceliand.ui.util.AssetsManager;
+         import com.broceliand.ui.util.ColorPalette;
+         import com.broceliand.ui.util.NullSkin;
+         import com.broceliand.ui.util.Profiler;
+         import com.broceliand.ui.util.SkinHelper;
+         import com.broceliand.ui.window.PTWindow;
+         import com.broceliand.ui.window.WindowController;
+         import com.broceliand.util.BroLocale;
+         import com.broceliand.util.logging.Log;
+         
+         import flash.globalization.LastOperationStatus;
+         
+         import mx.binding.utils.BindingUtils;
+         import mx.controls.Alert;
+         import mx.controls.ColorPicker;
+         import mx.utils.StringUtil;
+         
+         public static const DISPLAY_MODE_DEFAULT:uint = 0;
+         public static const DISPLAY_MODE_HOME:uint = 1;
+         public static const DISPLAY_MODE_NAVBAR:uint = 2;
+         public static const DISPLAY_MODE_NAVBAR_ANONYMOUS:uint = 3;
+         public static const DISPLAY_MODE_PRIVATE_MESSAGE_PANEL:uint = 4;
+         public static const DISPLAY_MODE_SW_PRIVATE_MESSAGE_PANEL:uint = 5;         
+         
+         public static const SEARCH_CUSTOM:Number = 0;
+         public static const SEARCH_PEARLTREES:Number = 1;
+         public static const SEARCH_MY_ACCOUNT:Number = 2;
+         public static const SEARCH_PEOPLE:Number = 3;
+         
+         public static const SEARCH_INPUT_HEIGHT:Number = 27;
+         public static const SEARCH_BOX_WIDTH:Number = 288;
+         public static const SEARCH_BOX_WIDTH_ANONYMOUS:Number = 200;
+         public static const SEARCH_BOX_WIDTH_PRIVATE_MESSAGE_PANEL:Number = 356;         
+         public static const SEARCH_BOX_WIDTH_SW_PRIVATE_MESSAGE_PANEL:Number = 280;
+         
+         public static const SEARCH_EVENT:String = "search";
+
+         private var _searchDefaultTextString:String;
+         private var _searchPeopleDefaultTextString:String;
+         private var _searchAccountDefaultTextString:String;
+         
+         private var _lastKeyword:String;
+         private var _lastSearchMode:Number;
+         private var _lastUserSearchId:Number = 0;
+         private var _lastWidthDrawingBackground:Number;
+         private var _navigationModel:INavigationManager;
+         private var _displayMode:uint;
+         private var _searchMode:int = 0;
+         private var _searchCurrentBtnString:String;
+         private var _keepLabelLayout:Boolean = false;
+         private var _isFirstKey:Boolean = true;
+         private var _hidePWOnSearchEmpty:Boolean = false;
+         
+         public function set displayMode(value:uint):void {
+            if (_displayMode != value) {
+               _displayMode = value;
+               if(_displayMode != DISPLAY_MODE_DEFAULT
+                  && _displayMode != DISPLAY_MODE_PRIVATE_MESSAGE_PANEL 
+                  && _displayMode != DISPLAY_MODE_SW_PRIVATE_MESSAGE_PANEL                  
+               ) {
+                  _searchMode = SEARCH_PEARLTREES;
+               }
+               invalidateProperties();
+            }
+         }
+         public function get displayMode():uint {
+            return _displayMode;
+         }
+         
+         public function set searchMode(mode:int):void {
+            var keyword:String = StringUtil.trim(searchInput.text);
+            var isEmpty:Boolean = (keyword == "" || keyword == searchInput.defaultText);
+            
+            _searchMode = mode;
+            updateDefaultLabel();
+            if (!isEmpty){
+               search(_searchMode);
+            }
+         }
+         
+         private function updateDefaultLabel():void {
+            if (_searchMode == SEARCH_PEOPLE) {
+               searchInput.defaultText = _searchPeopleDefaultTextString;
+            } else if (_searchMode == SEARCH_MY_ACCOUNT) {
+               searchInput.defaultText = _searchAccountDefaultTextString;
+            } else {
+               searchInput.defaultText = _searchDefaultTextString;
+            }
+         }
+         
+         private function updateBackgroundAsset ():void{
+            if (displayMode == DISPLAY_MODE_NAVBAR || displayMode == DISPLAY_MODE_NAVBAR_ANONYMOUS) {
+               backgroundAsset.source = AssetsManager.getEmbededAsset(NavBarAssets.SEARCHBOX_BACKGROUND_SHADOWED);
+            } else {
+               
+            }
+         }
+         
+         private function getRightNoModeButton():PTButton {
+            if (displayMode == DISPLAY_MODE_NAVBAR || displayMode == DISPLAY_MODE_NAVBAR_ANONYMOUS) {
+               return noModeButtonInNavBar;
+            } else {
+               return noModeButtonInPanel;
+            }
+         }
+         
+         private function updateWidth():void {
+            switch (_displayMode) {
+               case DISPLAY_MODE_NAVBAR_ANONYMOUS:
+                  width = SEARCH_BOX_WIDTH_ANONYMOUS;
+                  break;
+               case DISPLAY_MODE_PRIVATE_MESSAGE_PANEL:
+                  width = SEARCH_BOX_WIDTH_PRIVATE_MESSAGE_PANEL;
+                  height = 36;
+                  break;
+               case DISPLAY_MODE_SW_PRIVATE_MESSAGE_PANEL:
+                  width = SEARCH_BOX_WIDTH_SW_PRIVATE_MESSAGE_PANEL;
+                  height = 36;
+                  break;
+               default:
+                  width = SEARCH_BOX_WIDTH;
+            }
+         }
+         
+         private function updateMessages(event:Event = null):void {
+            if (_displayMode == DISPLAY_MODE_HOME) {
+               _searchDefaultTextString=BroLocale.getInstance().getText('searchBox.home.defaultText');
+               _searchPeopleDefaultTextString = BroLocale.getInstance().getText('searchBox.people.defaultText');
+               _searchAccountDefaultTextString = BroLocale.getInstance().getText('searchBox.account.defaultText');
+            } else if(_displayMode == DISPLAY_MODE_NAVBAR) {
+               _searchDefaultTextString=BroLocale.getInstance().getText('searchBox.defaultText');
+               _searchPeopleDefaultTextString = BroLocale.getInstance().getText('searchBox.people.defaultText');
+               _searchAccountDefaultTextString = BroLocale.getInstance().getText('searchBox.account.defaultText');
+            } else if(_displayMode == DISPLAY_MODE_NAVBAR_ANONYMOUS) {
+               
+               _searchDefaultTextString = _searchPeopleDefaultTextString = _searchAccountDefaultTextString = BroLocale.getInstance().getText('searchBox.defaultText.anonymous');
+            }
+            
+         }
+         
+         private function set hidePWOnSearchEmpty(v:Boolean):void {
+            if(_hidePWOnSearchEmpty != v) {
+               _hidePWOnSearchEmpty = v;
+               ApplicationManager.getInstance().components.windowController.temporaryHidePearlWindow(_hidePWOnSearchEmpty);
+            }
+         }
+         
+         private function isSearchModeActivated() : Boolean {
+            if (_displayMode == DISPLAY_MODE_PRIVATE_MESSAGE_PANEL
+               || _displayMode == DISPLAY_MODE_SW_PRIVATE_MESSAGE_PANEL) {
+               return false;
+            }
+            else {
+               var isAnonymous:Boolean = ApplicationManager.getInstance().currentUser.isAnonymous();
+               return !isAnonymous;
+            }
+         }
+         
+         public function updateSearchModeButton() : void {
+            if (isSearchModeActivated()) {
+               activateSearchMode(); 
+            } else {
+               deactivateSearchMode(); 
+            }
+            invalidateProperties();
+         }
+         
+         public function activateSearchMode() : void {
+            modeButton.includeInLayout = modeButton.visible = true;
+            if ( getRightNoModeButton() != null) {
+               getRightNoModeButton().includeInLayout = getRightNoModeButton().visible = false;
+            }
+            invalidateProperties();
+         }
+         
+         public function deactivateSearchMode() : void {
+            modeButton.includeInLayout = modeButton.visible = false;
+            if (!noModeButtonContainer.processedDescriptors) {
+               noModeButtonContainer.createComponentsFromDescriptors();
+            }
+            getRightNoModeButton().includeInLayout = getRightNoModeButton().visible = true;
+            invalidateProperties();
+         }
+         
+         private function onCreationComplete():void {
+            _navigationModel = ApplicationManager.getInstance().visualModel.navigationModel;
+            _navigationModel.addEventListener(SearchEvent.SEARCH_EVENT, onSearchEnd);
+            _navigationModel.addEventListener(SearchEvent.SEARCH_EVENT_ERROR, onSearchEndError);
+            _navigationModel.addEventListener(NavigationEvent.NAVIGATION_EVENT, onNavigationChange);
+            message.filters = getMessageFilters();
+            messageLine2.filters = getMessageFilters();
+            
+            updateBackgroundAsset();
+            updateLayoutParameters();
+            updateWidth();
+            updateMessages();
+            updateSearchModeButton();
+            updateDefaultLabel();
+            BroLocale.getInstance().addEventListener(BroLocale.LANG_CHANGED_EVENT, updateMessages);
+         }
+         
+         private function onSearchEnd(event:SearchEvent):void {
+            messageLine2.visible = messageLine2.includeInLayout = false;
+            if (_displayMode != DISPLAY_MODE_HOME) {
+               if (event.keyword != _lastKeyword && searchInput.focusManager.getFocus() != searchInput ) {
+                  searchInput.displayDefaultText = false;
+                  searchInput.text = event.keyword;
+                  _lastKeyword = event.keyword;
+               }
+            }
+            
+            if (event.keyword == _lastKeyword) {
+               var searchPeople:String = "";
+               if (event.isPeopleSearched) {
+                  searchPeople = "people.";
+               } 
+               else if (event.searchUserId > 0) {
+                  searchPeople = "account."
+               }
+               
+               hidePWOnSearchEmpty = event.resultCount == 0;
+               
+               message.visible = message.includeInLayout = false;
+
+            }
+            hideModeBox();
+         }
+         private function onSearchEndError(event:SearchEvent):void {
+            if (event.keyword == _lastKeyword) {
+               message.text = BroLocale.getInstance().getText("searchBox.error");
+               messageLine2.text = BroLocale.getInstance().getText("searchBox.error.line2");
+               message.visible = message.includeInLayout = true;
+               messageLine2.visible = messageLine2.includeInLayout = true;
+            }
+            hideModeBox();
+         }
+
+         private function hideModeBox():void {
+            var wc:IWindowController = ApplicationManager.getInstance().components.windowController;
+            if(wc.isSearchModeWindowOpen()) {
+               wc.closeSearchModeWindow();
+            }
+         }
+         private function onNavigationChange(event:NavigationEvent):void {
+            if(!_navigationModel.isShowingSearchResult() && !_navigationModel.isWhatsHot()) {
+               message.visible = message.includeInLayout = false;
+               messageLine2.visible = messageLine2.includeInLayout = false;
+               hidePWOnSearchEmpty = false;
+            }
+         }
+         
+         private function onTextInput():void {
+            if (_isFirstKey) {
+               updateDefaultLabel();
+               _isFirstKey = false;
+            }
+            
+         }
+         
+         private function onClickSearch():void {
+            search(_searchMode);
+         }
+         
+         private function search(searchMode:Number):void {
+            Profiler.getInstance().startSession("search");
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            var keyword:String = StringUtil.trim(searchInput.text);
+            var isKeywordEmpty:Boolean = (keyword == "" || keyword == searchInput.defaultText);
+            var isSearchable:Boolean = ((keyword != _lastKeyword || _lastSearchMode != searchMode )|| !_navigationModel.isShowingSearchResult());
+            
+            if(isSearchable) {
+               _lastKeyword = keyword;
+               _lastSearchMode = searchMode;
+               if (searchMode == SEARCH_MY_ACCOUNT && !isKeywordEmpty) {
+                  var currentUser:User = ApplicationManager.getInstance().currentUser;
+                  if (currentUser.isAnonymous()) {
+                     currentUser = ApplicationManager.getInstance().visualModel.navigationModel.getSelectedUser();
+                  }
+                  if (!currentUser.isAnonymous()) {
+                     _lastUserSearchId = currentUser.persistentId;
+                  }
+                  
+                  am.visualModel.navigationModel.navigate(NavigationDescription.searchInMyAccount(keyword, _lastUserSearchId));
+               } else if (searchMode == SEARCH_PEOPLE && !isKeywordEmpty) {
+                  am.visualModel.navigationModel.navigate(NavigationDescription.searchPeople(keyword));
+               } else if(searchMode == SEARCH_PEARLTREES && !isKeywordEmpty) {
+                  am.visualModel.navigationModel.navigate(NavigationDescription.search(keyword));
+               }
+               dispatchEvent(new Event(SEARCH_EVENT));
+            }
+            searchInput.unfocus();
+         }
+         
+         private function onClickModeButton():void {
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            var wc:IWindowController = am.components.windowController;
+            if(wc.isSearchModeWindowOpen()) {
+               wc.closeSearchModeWindow();
+            }else{
+               wc.openSearchModeWindow();
+            }
+         }
+         
+         public function getSearchModeWindowPosition():Rectangle {
+            var point:Point = modeButton.localToGlobal(new Point(0, 0));
+            var posX:Number = point.x + 5;
+            var posY:Number = WindowController.FEED_WINDOWS_TOP;
+            var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+            return position;
+         }
+         
+         public function getSearchModeWindowDockPosition():Rectangle {
+            var point:Point = modeButton.localToGlobal(new Point(0, 0));
+            var posX:Number = point.x + (modeButton.width / 2.0) + 2;
+            var posY:Number = point.y + (modeButton.height / 2.0) + 2;
+            var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+            return position;
+         }
+         
+         private function onCancelSearch():void {
+            setDefaultState();
+         }
+         
+         public function setDefaultState():void {
+            searchInput.text = "";
+            searchInput.displayDefaultText = true;
+            
+            message.visible = message.includeInLayout = false;
+            messageLine2.visible = messageLine2.includeInLayout = false;
+            _lastKeyword = null;
+            searchInput.unfocus();
+         }
+         
+         public function get lastKeyword():String {
+            return _lastKeyword;
+         }
+         
+         public function set defaultText(value:String):void {
+            if(value != _searchDefaultTextString) {
+               _searchDefaultTextString = value;
+               updateDefaultLabel();
+            }
+         }
+         
+         private function onFocusOutSearch():void {
+            if(searchInput.text == "" || searchInput.text == searchInput.defaultText) {
+               onCancelSearch();
+            }
+         }
+         
+         override public function setFocus():void {
+            if(searchInput) {
+               searchInput.setFocus();
+            }else{
+               super.setFocus();
+            }
+         }
+         
+         public function set text(value:String):void {
+            if(searchInput) {
+               searchInput.text = value;
+            }
+         }
+         
+         override protected function commitProperties():void {
+            super.commitProperties();
+            modeButton.enabled = (_displayMode == DISPLAY_MODE_NAVBAR); 
+            updateWidth();
+            updateMessages();
+            updateSearchModeButton();
+            updateDefaultLabel();
+         }
+         
+         private function updateLayoutParameters():void {
+            var shadowedStyle:Boolean = (displayMode == DISPLAY_MODE_NAVBAR || displayMode == DISPLAY_MODE_NAVBAR_ANONYMOUS);
+            backgroundAsset.setStyle('top', shadowedStyle ? 0 : 4);
+            buttonsAndTextContainer.setStyle('left', shadowedStyle ? 11 : 0);
+            buttonsAndTextContainer.setStyle('top', shadowedStyle ? 1 : -4);
+            buttonsAndTextContainer.setStyle('horizontalGap', shadowedStyle ? 6 : 0);
+            buttonsAndTextContainer.setStyle('paddingLeft', shadowedStyle ? 0 : 8);
+            searchInput.setStyle('paddingLeft', shadowedStyle ? 0 : 5);
+         }
+         
+         override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void {
+            
+            super.updateDisplayList(unscaledWidth, unscaledHeight);
+            return;
+            if(width != _lastWidthDrawingBackground) {
+               _lastWidthDrawingBackground = width;
+               var g:Graphics = background.graphics;
+               g.clear();
+               g.lineStyle(2, ColorPalette.getInstance().pearltreesColor);
+               g.beginFill(ColorPalette.getInstance().backgroundColor);
+               if(_isRoundSkin) {
+                  g.drawRoundRect(0,0,width,SEARCH_INPUT_HEIGHT,SEARCH_INPUT_HEIGHT,SEARCH_INPUT_HEIGHT);
+               }else{
+                  g.drawRoundRect(0,0,width,SEARCH_INPUT_HEIGHT,10,10);
+               }
+               g.endFill();
+            }
+         }
+         
+         private function getMessageFilters():Array{
+            return new Array(SkinHelper.getDropShadowFilter());
+         }
+         public function end():void {
+            _navigationModel.removeEventListener(SearchEvent.SEARCH_EVENT, onSearchEnd);
+            _navigationModel.removeEventListener(NavigationEvent.NAVIGATION_EVENT, onNavigationChange);
+         }
+      ]]>
+   </mx:Script>
+</mx:VBox>

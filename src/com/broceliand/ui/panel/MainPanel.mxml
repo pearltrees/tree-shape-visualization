@@ -1,0 +1,622 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+           xmlns:ui="com.broceliand.ui.pearlTree.*"
+           xmlns:pw="com.broceliand.ui.pearlWindow.*"
+           xmlns:tm="com.broceliand.ui.tabMenu.*"
+           xmlns:historyLoaderUI1="com.broceliand.ui.panel.historyLoaderUI.*"
+           xmlns:scrollUi="com.broceliand.pearlTree.interactors.scroll.*"
+           xmlns:panel="com.broceliand.ui.panel.*" 
+           xmlns:layout="com.broceliand.graphLayout.layout.*" 
+           xmlns:scroll1="com.broceliand.ui.interactors.scroll.*"
+           verticalScrollPolicy="off" 
+           horizontalScrollPolicy="off"
+           creationComplete="onCreationComplete()" 
+           addedToStage="onAddedToStage()"
+           xmlns:exporter="com.broceliand.pearlTree.io.exporter.*"
+           xmlns:pwbase="com.broceliand.ui.pearlWindow.ui.base.*"
+           xmlns:iFrame="com.broceliand.ui.iFrame.*" 
+           xmlns:player="com.broceliand.player.*"
+           xmlns:navigationBar="com.broceliand.ui.navigationBar.*" 
+           xmlns:getstarted="com.broceliand.ui.getstarted.*" 
+           xmlns:eventBlocker="com.broceliand.ui.sticker.eventBlocker.*" 
+           xmlns:util="com.broceliand.util.tools.*" 
+           xmlns:button="com.broceliand.ui.button.*" 
+           xmlns:search="com.broceliand.ui.search.*" 
+           xmlns:notifications="com.broceliand.ui.notifications.*"
+           xmlns:navBar="com.broceliand.ui.navBar.*" 
+           xmlns:textInput="com.broceliand.ui.textInput.*" 
+           xmlns:base="com.broceliand.ui.pearlWindow.ui.base.*" 
+           xmlns:extra="com.broceliand.extra.*" 
+           xmlns:delegates="com.broceliand.extra.delegates.*"
+           xmlns:eventpromo="com.broceliand.ui.window.ui.eventpromo.*"
+           xmlns:signUpBanner="com.broceliand.ui.window.ui.signUpBanner.*"
+           xmlns:background="com.broceliand.ui.customization.background.*"
+           xmlns:teaser="com.broceliand.ui.teaser.*">
+   
+   <mx:Canvas id="map" creationPolicy="none"
+              width="100%" height="100%" 
+              verticalScrollPolicy="off" horizontalScrollPolicy="off">
+      
+      <background:Background id="background"
+                             width="100%" height="100%" visible="true" includeInLayout="true" size="{Background.SIZE_FULL}" softImageSwitch="true"/>
+      
+      <mx:Canvas id="myWorld" 
+                 width="100%" height="100%" 
+                 horizontalScrollPolicy="off"  verticalScrollPolicy="off"
+                 backgroundColor="{ColorPalette.getInstance().backgroundColor}"
+                 backgroundAlpha="0">
+      </mx:Canvas>
+      <teaser:TeaserCanvas id="teaser" left="0" bottom="{Footer.DECK_HEIGHT}"/>
+      
+      <mx:Text id="feed" right="0" y="{height - 125}" width="50%" enabled="false" textAlign="right" visible="false" />
+      
+      <delegates:OnlineEditorsPanelDelegate id="onlineEditorsPanel"
+                                            delegateCreationPolicy="onModuleLoad" />
+      <mx:Canvas id="windowContainer"
+                 horizontalScrollPolicy="off" verticalScrollPolicy="off" 
+                 width="100%" height="100%"
+                 preinitialize="onDefaultWindowContainerInitialize()" />
+      
+      <eventpromo:EventPromoButton id="eventPromoButton"
+                                   visible="false"
+                                   includeInLayout="false"
+                                   top="{WindowController.COMMON_WINDOWS_TOP - EventPromoButton.CORNER_RADIUS}"
+                                   right="{WindowController.FEED_WINDOWS_RIGHT - EventPromoButton.CORNER_RADIUS}"/>
+      <eventpromo:EventPromoButton id="eventPromoButtonAndroid"
+                                   isOnlyAndroidAppPromo="true"
+                                   visible="false"
+                                   includeInLayout="false"
+                                   top="{WindowController.COMMON_WINDOWS_TOP - EventPromoButton.CORNER_RADIUS + EventPromoButton.PROMO_HEIGHT + 15}"
+                                   right="{WindowController.FEED_WINDOWS_RIGHT - EventPromoButton.CORNER_RADIUS}"/>
+      
+      <!--  Using a component with backgroundAlpha=1 and knockout=true (see SkinHelper.getDropShadowFilter)
+      draw a shadow around a transparent shape. Otherwise if the background is not fully transparent a shadow is drawn "under" it -->
+      
+      <mx:Canvas id="topPanel" width="100%">
+         <mx:HBox id="rightPanel"
+                  right="0" top="0" horizontalGap="4" height="100%" visible="{navBar.visible}">
+            <notifications:NoveltyFeedWindowIcon id="noveltyFeedIcon" />
+            <notifications:NotificationStatusIcon id="notificationIcon" />
+            <mx:Spacer id="notificationIconSpacer" width="1" />
+            <search:SearchBox id="searchBox" paddingTop="0" displayMode="{SearchBox.DISPLAY_MODE_NAVBAR}" />
+            <mx:HBox horizontalGap="0" paddingTop="0">
+               <notifications:SettingsIcon id="settingsIcon" />
+            </mx:HBox>
+         </mx:HBox>
+      </mx:Canvas>
+      <mx:Canvas id="windowUpperContainer"
+                 horizontalScrollPolicy="off" verticalScrollPolicy="off" 
+                 width="100%" height="100%" />
+      
+      <navBar:NavBar id="navBar" 
+                     left="12" top="0" width="{rightPanel.x - navBar.x}"/>
+      
+      <button:PTLinkButton id="debugButton" label="synchronize" bottom="140" right="2" visible="{feed.visible}"   
+                           click="SynchronizationTimer._disableAutomaticSynchronization = true; ApplicationManager.getInstance().persistencyQueue.processQueue();" />
+   </mx:Canvas>
+   
+   <mx:Canvas id="playerContainer"
+              width="100%" height="100%" 
+              horizontalScrollPolicy="off" verticalScrollPolicy="off" />
+   
+   <mx:UIComponent id="borderContainer" visible="false" includeInLayout="false" />
+
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.ApplicationMessageBroadcaster;
+         import com.broceliand.EmbedManager;
+         import com.broceliand.graphLayout.layout.IPTLayouter;
+         import com.broceliand.graphLayout.layout.PTLayouter;
+         import com.broceliand.pearlTree.io.loader.AccountManager;
+         import com.broceliand.pearlTree.io.loader.PromoLoader;
+         import com.broceliand.pearlTree.io.sync.SynchronizationTimer;
+         import com.broceliand.pearlTree.navigation.NavigationEvent;
+         import com.broceliand.pearlTree.navigation.impl.Url2EmbedWindow;
+         import com.broceliand.player.IPearlTreePlayer;
+         import com.broceliand.ui.ComponentsAccessPoint;
+         import com.broceliand.ui.controller.IPearlbarInfo;
+         import com.broceliand.ui.controller.NavigationDisplaySynchronizer;
+         import com.broceliand.ui.controller.PearlbarInfo;
+         import com.broceliand.ui.controller.startPolicy.StartPolicyLogger;
+         import com.broceliand.ui.embed.header.EmbedHeader;
+         import com.broceliand.ui.interactors.MapActivityManager;
+         import com.broceliand.ui.navBar.INavBar;
+         import com.broceliand.ui.navBar.NavBarManager;
+         import com.broceliand.ui.pearlBar.Footer;
+         import com.broceliand.ui.pearlTree.IPearlTreeViewer;
+         import com.broceliand.ui.screenwindow.IScreenLine;
+         import com.broceliand.ui.settings.ISettings;
+         import com.broceliand.ui.sticker.help.IContextualHelp;
+         import com.broceliand.ui.util.ColorPalette;
+         import com.broceliand.ui.welcome.Facepile;
+         import com.broceliand.ui.window.IPTWindow;
+         import com.broceliand.ui.window.WindowController;
+         import com.broceliand.ui.window.ui.signUpBanner.SignUpBanner;
+         import com.broceliand.util.GenericAction;
+         import com.broceliand.util.logging.BroLogger;
+         import com.broceliand.util.logging.Log;
+         
+         import mx.core.Application;
+         import mx.core.IUIComponent;
+         import mx.core.ScrollPolicy;
+         import mx.core.UIComponent;
+         import mx.events.DragEvent;
+         import mx.events.FlexEvent;
+         import mx.managers.DragManager;
+         import mx.managers.ToolTipManager;
+         
+         private var _propertiesCommited:Boolean=false;
+         private var _pearlTreeViewer:IPearlTreeViewer = null;
+         private var _getStarted:UIComponent = null;
+         private var _mapActivityManager:MapActivityManager = null;
+         private var _parentTopPanel:TopPanel;
+         private var _windowContainer:Canvas;
+         private var _promoLoader:PromoLoader;
+         private var _hasToShowSignupBanner:Boolean = false;
+         private var _facepileBackground:UIComponent; 
+         private var _signupBanner:SignUpBanner;
+         private var _gettingStartedCover:UIComponent;
+         private var logger:BroLogger = Log.getLogger("com.broceliand.ui.window.ui.panel");
+         private static const DISABLE_FILTER:Boolean = true;
+         
+         override public function set width(value:Number):void {
+            if(super.width != value) {
+               super.width = value;
+            }
+         }
+         
+         override protected function createChildren():void {       
+            super.createChildren();
+            _mapActivityManager = new MapActivityManager();
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            var comps:ComponentsAccessPoint = am.components;
+            comps.mainPanel = this;
+            
+            if(!am.isOverlay() && !am.isEmbedWindowMode()) {
+               map.createComponentsFromDescriptors();
+               installPearlTreeViewer(comps.pearlTreeViewer);
+            }
+            if(am.isEmbed()) {
+               map.addChild(new EmbedHeader());
+               
+               borderContainer.visible = borderContainer.includeInLayout = true;
+               navBar.visible = navBar.includeInLayout = false;
+               windowUpperContainer.visible = windowUpperContainer.includeInLayout = false;
+               playerContainer.visible = playerContainer.includeInLayout = false;              
+               topPanel.visible = topPanel.includeInLayout = false;
+               ColorPalette.getInstance().pearltreesColor = ColorPalette.PEARLTREES_EMBED_COLOR;
+               am.enableTooltip = true;
+               ToolTipManager.showDelay = 1500;
+            }
+            if(am.isEmbedWindowMode()) {
+               borderContainer.visible = borderContainer.includeInLayout = true;
+               ColorPalette.getInstance().pearltreesColor = ColorPalette.PEARLTREES_EMBED_COLOR;
+               am.enableTooltip = false;
+            }
+            if(am.isOverlay()) {
+               ColorPalette.getInstance().pearltreesColor = ColorPalette.PEARLTREES_EMBED_COLOR;
+            }
+            
+            am.feed = feed;          
+            
+            addEventListener(DragEvent.DRAG_ENTER, dragEnterHandler);
+         }
+
+         private function dragEnterHandler(event:DragEvent):void {
+            DragManager.acceptDragDrop(event.target  as IUIComponent);
+         }
+         
+         override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void {
+            super.updateDisplayList(unscaledWidth, unscaledHeight);
+            
+            if(borderContainer && borderContainer.visible) {
+               var g:Graphics = borderContainer.graphics;
+               g.clear();
+               var am:ApplicationManager = ApplicationManager.getInstance();
+               
+               if(am.isEmbed()) {
+                  var paddingBottom:uint = (am.embedManager.isModeFacebook())?EmbedManager.FACEBOOK_PADDING_BOTTOM:0;
+                  var borderColor:int = (am.embedManager.isModeFacebook())?0xE9E9E9:ColorPalette.getInstance().pearltreesColor;
+
+                  g.lineStyle(1, ColorPalette.getInstance().backgroundColor);
+                  g.moveTo(0, 0);
+                  g.lineTo(stage.stageWidth - 1, 0);
+                  g.lineTo(stage.stageWidth - 1, stage.stageHeight - 1);
+                  if(am.embedManager.isModeFacebook()) {
+                     g.moveTo(0, stage.stageHeight - 1);
+                  }else{
+                     g.lineTo(0, stage.stageHeight - 1);
+                  }
+                  g.lineTo(0, 0);
+
+                  g.lineStyle(1, borderColor);
+                  g.moveTo(1, 1);
+                  g.lineTo(stage.stageWidth - 2, 1);
+                  g.lineTo(stage.stageWidth - 2, stage.stageHeight - 2 - paddingBottom);
+                  if(am.embedManager.isModeFacebook()) {
+                     g.moveTo(1, stage.stageHeight - 2 - paddingBottom);
+                  }else{
+                     g.lineTo(1, stage.stageHeight - 2 - paddingBottom);
+                  }
+                  g.lineTo(1, 1);
+               }else{
+                  
+                  g.lineStyle(1, ColorPalette.getInstance().pearltreesColor);
+                  g.moveTo(0, 0);
+                  g.lineTo(stage.stageWidth - 1, 0);
+                  g.lineTo(stage.stageWidth - 1, stage.stageHeight - 1);
+                  g.lineTo(0, stage.stageHeight - 1);
+                  g.lineTo(0, 0);                  
+               }
+               
+               g.endFill();
+            }
+         }
+         
+         private function onCreationComplete():void {
+            StartPolicyLogger.getInstance().setMainPanelCreated();
+            _propertiesCommited = true;
+            
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            if (feed) {
+               feed.visible =false;
+            }
+            am.visualModel.applicationMessageBroadcaster.addEventListener(ApplicationMessageBroadcaster.WHITE_MARK_CHANGED_EVENT, onWhiteMarkedChanged);
+            horizontalScrollPolicy = ScrollPolicy.OFF;
+            verticalScrollPolicy = ScrollPolicy.OFF; 
+            am.addCloseApplicationListener(onApplicationExit);
+            
+            if(!am.isOverlay() && !am.isEmbedWindowMode()) {
+               if(!am.isEmbed()) {
+                  new NavBarManager(navigationBar);
+               }
+               
+               am.accountManager.addEventListener(AccountManager.USER_LOGGED_IN_EVENT, onUserLogIn);
+               am.accountManager.addEventListener(AccountManager.USER_LOGGED_OUT_EVENT, onUserLogOut);
+            }
+            
+            if(am.isEmbedWindowMode() && Url2EmbedWindow.notifyInit()) {
+               am.notifyEmbedWindowInitialized();
+            }
+            
+            showOrHideEventPromo();
+            showOrHideBackground();
+
+            if(_signupBanner) {
+               if (am.currentUser.isLoggedOnFacebook()) {
+                  _signupBanner.signUpBannerMode = SignUpBanner.SIGN_UP_BANNER_MODE_FACEBOOK;
+               }
+               else {
+                  _signupBanner.signUpBannerMode = SignUpBanner.SIGN_UP_BANNER_MODE_STANDARD;
+               }
+            }
+         }
+         
+         private function onWhiteMarkedChanged(event:Event):void {
+            var isWhiteMark:Boolean = ApplicationManager.getInstance().isWhiteMark();
+            displaySignupBanner(!isWhiteMark);
+            updateSearchBoxAvailability();   
+         }
+         
+         public function displaySignupBanner(show:Boolean):void {
+            trace("displaySignup : "+show);
+            if (show) {
+               if (!_signupBanner) {
+                  _signupBanner = new SignUpBanner();
+                  _signupBanner.y = WindowController.SIGNUP_BANNER_TOP;
+               }
+               if (ApplicationManager.getInstance().currentUser.isLoggedOnFacebook()) {
+                  _signupBanner.signUpBannerMode = SignUpBanner.SIGN_UP_BANNER_MODE_FACEBOOK;
+               }
+               else {
+                  _signupBanner.signUpBannerMode = SignUpBanner.SIGN_UP_BANNER_MODE_STANDARD;
+               }
+               map.addChildAt(_signupBanner, map.getChildIndex(navBar));
+            }
+            else {
+               if (_signupBanner) {
+                  _signupBanner.end();
+                  map.removeChild(_signupBanner);
+                  _signupBanner = null;
+               }
+            }
+         }
+         
+         public function get navigationBar():INavBar {
+            return navBar as INavBar;
+         }
+         
+         private function onDefaultWindowContainerInitialize():void {
+            _windowContainer = windowContainer;
+         }
+         
+         private function onUserLogIn(event:Event):void {
+            showOrHideEventPromo();
+            showOrHideBackground();
+            background.updateBackgroundAlpha();
+            
+         }
+         private function onUserLogOut(event:Event):void {
+            showOrHideEventPromo();
+            showOrHideBackground();
+            background.updateBackgroundAlpha();
+            
+         }
+         
+         public function addToWindowContainer(can:Canvas):void {
+            windowContainer.addChild(can);
+         }
+         public function removeFromWindowContainer(can:Canvas):void {
+            windowContainer.removeChild(can);
+         }
+         
+         public function showOrHideEventPromo():void {
+            if (!eventPromoButton) return;
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            EventPromoButton.clearSharedObject(); 
+            if (  !am.isOverlay()
+               && !am.isEmbedWindowMode()
+               && !am.isEmbed()
+               && !am.currentUser.isAnonymous()
+               && !am.visualModel.navigationModel.getTunnelModel().isInsideTunnel) {
+               eventPromoButton.showOrHide();  
+               eventPromoButtonAndroid.showOrHide();
+            }
+            else {
+               eventPromoButton.includeInLayout = eventPromoButton.visible = false;
+               eventPromoButtonAndroid.includeInLayout = eventPromoButtonAndroid.visible = false;
+            }
+         }
+         
+         public function showOrHideBackground():void {
+            var am:ApplicationManager = ApplicationManager.getInstance();            
+            var gettingStartedHelp:IContextualHelp = am.components.getContextualHelp(false);
+            if (background == null) {
+               return;
+            }
+            var isInTunnel:Boolean = am.visualModel.navigationModel.getTunnelModel() && am.visualModel.navigationModel.getTunnelModel().isInsideTunnel;
+            var isInGettingStarted:Boolean = gettingStartedHelp && gettingStartedHelp.visible;
+            if (isInTunnel || isInGettingStarted) {
+               background.visible = teaser.visible = false;
+            } else {
+               background.visible = teaser.visible = true;
+            }
+         }
+         
+         public function coverBackgroundAndPearlbar(toCover:Boolean):void {
+            if (!_gettingStartedCover && toCover) {
+               _gettingStartedCover = new UIComponent();
+               var graphics:Graphics = _gettingStartedCover.graphics;
+               graphics.beginFill(0xFFFFFF, 1);
+               graphics.drawRect(0, 0, stage.stageWidth, stage.stageHeight);
+               map.addChildAt(_gettingStartedCover, map.getChildIndex(topPanel)-1);
+            }
+            if (_gettingStartedCover){
+               _gettingStartedCover.visible = _gettingStartedCover.includeInLayout = toCover;
+            }
+         }
+         
+         public function hideEventPromo():void {
+            eventPromoButton.includeInLayout = eventPromoButton.visible = false;
+         }
+         
+         private function onAddedToStage():void {
+            ApplicationManager.getInstance().keyboardListener.listenStage(stage);
+         }
+         
+         public function installComponent(comp:Object):void {
+            if (comp is IPearlTreeViewer) {
+               installPearlTreeViewer(comp as IPearlTreeViewer);
+            } else  if (comp is IPearlTreePlayer) {
+               installPlayer(comp as IPearlTreePlayer);
+            } else if (comp is IPTWindow) {
+               installWindow(comp as IPTWindow);
+            } else if (comp is ISettings) {
+               installSettings(comp as ISettings);
+            } else if (comp is IScreenLine) {
+               installScreenLine(comp as IScreenLine);
+            }
+         }
+         
+         private function installPearlTreeViewer(pearlTreeViewer:IPearlTreeViewer):void {
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            _pearlTreeViewer = pearlTreeViewer;
+            _mapActivityManager.map = _pearlTreeViewer;
+            var ptviewer:UIComponent= _pearlTreeViewer as UIComponent; 
+            ptviewer.percentHeight=100;
+            ptviewer.percentWidth=100;
+            myWorld.addChild(ptviewer);
+            
+            var layouter:IPTLayouter =new PTLayouter(_pearlTreeViewer.vgraph);
+            _pearlTreeViewer.vgraph.layouter =layouter;
+            _pearlTreeViewer.init();
+            
+            onlineEditorsPanel.model = am.notificationCenter.onlineEditorsModel;
+            
+            if(!ApplicationManager.getInstance().isEmbed()) {
+               attachPearlbarInfo();
+            } else {            
+               
+               layouter.centerNextLayoutAndZoomOutBigTree(true, true);
+            }
+            
+            new NavigationDisplaySynchronizer(_pearlTreeViewer);
+            _pearlTreeViewer.interactorManager.setActive(true); 
+         }
+         
+         private function installScreenLine(screenLine:IScreenLine):void {
+            var ui:UIComponent = screenLine.getScreenLineView();
+            _mapActivityManager.screenLine = screenLine;
+            ui.percentHeight=100;
+            ui.percentWidth=100;
+            playerContainer.addChildAt(ui as DisplayObject, 0);
+         }
+         private function installPlayer(pearlTreePlayer:IPearlTreePlayer):void {
+            _mapActivityManager.player = pearlTreePlayer;
+            var ui:UIComponent = pearlTreePlayer.getGraphicalComponent();
+            ui.percentHeight=100;
+            ui.percentWidth=100;
+            playerContainer.addChild(pearlTreePlayer as DisplayObject);
+         }
+         private function installWindow(window:IPTWindow):void {
+            if(window.windowId == WindowController.UPDATE_ADDON_WINDOW
+               || window.windowId == WindowController.STARTUP_MESSAGE_WINDOW
+               || window.windowId == WindowController.EVENT_PROMO_WINDOW) {
+               
+               var updateAddonWindowContainer:Canvas = new Canvas();
+               updateAddonWindowContainer.percentWidth = 100;
+               updateAddonWindowContainer.percentHeight = 100;
+               
+               parentTopPanel.addChild(updateAddonWindowContainer);
+               updateAddonWindowContainer.addChild(window as DisplayObject);
+            }
+            else if(window.windowId == WindowController.SEARCH_MODE_PANEL_WINDOW
+               || window.windowId == WindowController.SETTINGS_PANEL_WINDOW
+               || window.windowId == WindowController.NOVELTY_FEED_WINDOW
+               || window.windowId == WindowController.SEARCH_MODE_PANEL_WINDOW
+               || window.windowId == WindowController.NOTIF_PANEL_WINDOW) {
+               
+               if (window.windowId == WindowController.NOTIF_PANEL_WINDOW) {
+                  logger.info("MainPanel: adding window.windowId={0} (NOTIF_PANEL_WINDOW)", window.windowId);
+               }
+               windowUpperContainer.addChild(window as DisplayObject);
+            }
+            else if(_windowContainer) {
+               _windowContainer.addChild(window as DisplayObject);
+            }
+         }
+         
+         private function installSettings(s:ISettings):void {
+            addChild(s as  DisplayObject);
+         }         
+         private function attachPearlbarInfo():void{
+            var pearlbarInfo:IPearlbarInfo = new PearlbarInfo();
+            ApplicationManager.getInstance().components.pearlbarInfo = pearlbarInfo;
+            pearlbarInfo.detectPearlbar();
+         }
+         
+         private function onClickLogin():void {
+            ApplicationManager.getInstance().menuActions.login(true);
+         }
+         
+         public function onApplicationExit(e:Event):void {
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            am.distantServices.navigationTracker.saveModel();
+         }    
+         
+         public function getNewNotificationsWindowDockPosition():Rectangle {
+            var point:Point = notificationIcon.localToGlobal(new Point(0, 0));
+            var posX:Number = point.x + (notificationIcon.width / 2.0) + 2;
+            var posY:Number = point.y + notificationIcon.height - 5;
+            var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+            return position;
+         }
+         public function getNoveltyFeedWindowDockPosition():Rectangle {
+            var point:Point = noveltyFeedIcon.localToGlobal(new Point(0, 0));
+            var posX:Number = point.x + (noveltyFeedIcon.width / 2.0) + 2;
+            var posY:Number = point.y + noveltyFeedIcon.height - 5;
+            var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+            return position;
+         }
+         public function getSettingsWindowDockPosition():Rectangle {
+            var point:Point = settingsIcon.localToGlobal(new Point(0, 0));
+            var posX:Number = point.x + (settingsIcon.width / 2.0) + 2;
+            var posY:Number = point.y + settingsIcon.height + 5;
+            var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+            return position;
+         }
+         public function set parentTopPanel(value:TopPanel):void{
+            _parentTopPanel = value;
+         }
+         public function get parentTopPanel():TopPanel{
+            return _parentTopPanel;
+         }
+         
+         public function setAnonymousMode():void {
+            if (!processedDescriptors) {
+               var ga:GenericAction = new GenericAction(null, this, setAnonymousMode);
+               addEventListener(FlexEvent.CREATION_COMPLETE, ga.performActionOnFirstEvent);
+               return;
+            } 
+            
+            if(notificationIcon) {
+               notificationIcon.visible = notificationIcon.includeInLayout = false;
+               notificationIconSpacer.visible = notificationIconSpacer.includeInLayout = false;
+            }
+            if (noveltyFeedIcon) {
+               noveltyFeedIcon.visible = noveltyFeedIcon.includeInLayout = false;
+            }
+            if(settingsIcon) {
+               settingsIcon.visible = settingsIcon.includeInLayout = false;
+            }
+            if (searchBox){
+               searchBox.displayMode = SearchBox.DISPLAY_MODE_NAVBAR_ANONYMOUS;
+               updateSearchBoxAvailability();
+               var sw:Number  = ApplicationManager.flexApplication.stage.stageWidth;
+               if (sw > 100 && sw<= Facepile.offset_x + Facepile.facepile_width + searchBox.width){
+                  searchBox.visible = searchBox.includeInLayout = false;
+               }
+               searchBox.alpha = ColorPalette.PEARLTREES_BAR_ALPHA;
+            }
+            displaySignupBannerIfNeeded();
+            
+         }
+         
+         public function updateSearchBoxAvailability():void {
+            if (processedDescriptors && ApplicationManager.getInstance().currentUser.isAnonymous()) {
+               searchBox.visible = searchBox.includeInLayout = !ApplicationManager.getInstance().isWhiteMark();
+               
+            }
+         }
+         private function displaySignupBannerIfNeeded():void {
+            if (!ApplicationManager.getInstance().isEmbed() && !ApplicationManager.getInstance().isWhiteMark()) {
+               if (!StartPolicyLogger.getInstance().isFirstNavigationEnded()) {
+                  
+                  var ga:GenericAction = new GenericAction(null, this, displaySignupBannerIfNeeded);
+                  ApplicationManager.getInstance().visualModel.navigationModel.addEventListener(NavigationEvent.NAVIGATION_EVENT, ga.performActionOnFirstEvent);
+                  return;
+               }
+               displaySignupBanner(true);
+            }
+         }
+         
+         public function setLoggedMode():void {
+            if (!processedDescriptors) {
+               var ga:GenericAction = new GenericAction(null, this, setLoggedMode);
+               addEventListener(FlexEvent.CREATION_COMPLETE, ga.performActionOnFirstEvent);
+               return;
+            } 
+            
+            notificationIconSpacer.visible = notificationIconSpacer.includeInLayout = true;
+            notificationIcon.visible = notificationIcon.includeInLayout = true;
+            noveltyFeedIcon.visible = noveltyFeedIcon.includeInLayout = true;
+            settingsIcon.visible = settingsIcon.includeInLayout = true;
+            displaySignupBanner(false);
+            searchBox.visible = searchBox.includeInLayout = true;
+            searchBox.displayMode = SearchBox.DISPLAY_MODE_NAVBAR;
+         }
+         
+         public function addFacePileBackgroundIfNeeded(component:UIComponent):void {
+
+         }
+         
+         public function removeFacepileBackground():void {
+            if (_facepileBackground) {
+               map.removeChild(_facepileBackground);
+               _facepileBackground = null;
+            }
+         }
+         
+         public function get signUpBanner():SignUpBanner {
+            return _signupBanner;
+         }
+         
+         public function isPointOverTopButtons(point:Point):Boolean {
+            return   rightPanel.hitTestPoint(point.x, point.y) ||
+               navigationBar.isPointOverNavBarLeftButtons(point);
+         }
+         
+      ]]>
+   </mx:Script>
+</mx:Canvas>

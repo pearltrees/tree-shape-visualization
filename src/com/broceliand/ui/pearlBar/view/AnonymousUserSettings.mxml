@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" 
+         xmlns:view="com.broceliand.ui.pearlBar.view.*" 
+         creationComplete="onCreationComplete()"
+         paddingRight="0" paddingLeft="0" xmlns:base="com.broceliand.ui.pearlWindow.ui.base.*">
+   
+   <base:PWCheckBox id="discoverSetting"
+                    height="26"
+                    width="400"
+                    label="{BroLocale.getInstance().getText('anonymous.userSettings.shareDiscover')}"
+                    color="{DEFAULT_TEXT_COLOR}"
+                    fontSize="13"
+                    click="onClickDiscoverSetting()"
+                    thinMode="{PWCheckBox.FAT}"/>
+   
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.pearlTree.model.AutoActionFbState;
+         import com.broceliand.pearlTree.model.FacebookAccount;
+         import com.broceliand.util.BroLocale;
+         import com.broceliand.util.GenericAction;
+         import com.broceliand.util.logging.BroLogger;
+         import com.broceliand.util.logging.Log;
+         
+         private static const DEFAULT_TEXT_COLOR:int = 0x999999;
+         [Bindable]
+         private var _isEmbed:Boolean;
+         private var _isSharingDiscoveries:Boolean;
+         private var _isLoaded:Boolean = false;
+         
+         public function isEmbedMode():Boolean {
+            return _isEmbed;
+         }
+         
+         override protected function commitProperties():void {
+            super.commitProperties();
+            discoverSetting.selected = _isSharingDiscoveries;
+         }
+         
+         private function onCreationComplete():void {
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            _isEmbed = am.isEmbed();
+            var action:GenericAction;
+            if (am.currentUser.facebookAccount.getAccountAccessor().isLoaded()) {
+               updateDiscoverSettings();
+            } else {
+               action = new GenericAction(null, this, updateDiscoverSettings);
+               am.currentUser.facebookAccount.getAccountAccessor().loadValue(action);
+            }
+         }
+         
+         private function updateDiscoverSettings():void {
+            _isLoaded = true;
+            var autoActionFbState:int = ApplicationManager.getInstance().currentUser.facebookAccount.loadAutoActionFbState();
+            _isSharingDiscoveries = AutoActionFbState.isAutoActionEnabled(autoActionFbState,AutoActionFbState.DISCOVERIES);
+            discoverSetting.selected = _isSharingDiscoveries;
+            callLater(invalidateProperties);
+         }
+         
+         private function onClickDiscoverSetting():void {
+            var fbAccount:FacebookAccount = ApplicationManager.getInstance().currentUser.facebookAccount;
+            if (_isLoaded) {
+               _isSharingDiscoveries = !_isSharingDiscoveries;
+               fbAccount.setDiscoveryFbAction(_isSharingDiscoveries);
+               fbAccount.saveCurrentFbUserSettings();
+            }
+         }
+         
+      ]]>
+   </mx:Script>
+</mx:VBox>

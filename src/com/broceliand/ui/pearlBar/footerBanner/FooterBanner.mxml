@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+           xmlns:button="com.broceliand.ui.button.*"
+           bottom="0" right="0" left="0"
+           height="{HEIGHT}"
+           creationComplete="onCreationComplete()"
+           horizontalScrollPolicy="off"
+           implements="com.broceliand.ui.pearlBar.footerBanner.IFooterBanner"
+           alpha="{ColorPalette.PEARLTREES_BAR_ALPHA}"
+           >
+   
+   <mx:Canvas id="bannerContent"
+              height="{HEIGHT}"
+              horizontalScrollPolicy="off"
+              right="0" bottom="0" left="0"
+              alpha="1"
+              visible="false" includeInLayout="false">
+      
+      <mx:Label id="message"
+                fontWeight="normal" selectable="false" maxHeight="42"
+                color="#FFFFFF" fontSize="{Footer.FONT_SIZE_LABEL}"
+                filters="{getTextFilters()}"
+                textAlign="center"
+                />
+      
+   </mx:Canvas>   
+   
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.assets.PearlDeckAssets;
+         import com.broceliand.pearlTree.model.BroAssociation;
+         import com.broceliand.pearlTree.model.BroPearlTree;
+         import com.broceliand.ui.navBar.NavBar;
+         import com.broceliand.ui.pearlBar.Footer;
+         import com.broceliand.ui.pearlBar.IFooter;
+         import com.broceliand.ui.util.ColorPalette;
+         import com.broceliand.ui.util.SkinHelper;
+         import com.broceliand.util.BroLocale;
+         
+         import mx.effects.AnimateProperty;
+         import mx.events.EffectEvent;
+         import mx.events.FlexEvent;
+         
+         public static const HEIGHT:Number = 80;
+         public static const EFFECT_DURATION:Number = 1000;
+         private static const MESSAGE_PADDING_LEFT:Number = 20;
+         
+         private var _model:FooterBannerModel;
+         private var modelChanged:Boolean;
+         private var _currentState:uint = FooterBannerModel.STATE_DEFAULT;
+         private var _isPlayingBannerEffect:Boolean;
+
+         public function get bannerModel():FooterBannerModel {
+            return model;
+         }
+         public function get model():FooterBannerModel {
+            if(!_model) {
+               model = new FooterBannerModel();
+            }
+            return _model;
+         }
+         public function set model(value:FooterBannerModel):void {
+            if(value != _model) {
+               if(_model) {
+                  _model.removeEventListener(FooterBannerModel.MODEL_CHANGE, onModelChange);
+               }
+               _model = value;
+               if(_model) {
+                  _model.addEventListener(FooterBannerModel.MODEL_CHANGE, onModelChange);
+               }
+            }
+         }
+         
+         private function onModelChange(event:Event):void {
+            modelChanged = true;
+            invalidateProperties();
+            invalidateDisplayList();
+            invalidateSize();
+         }
+
+         override protected function commitProperties():void {
+            super.commitProperties();
+            visible = includeInLayout = model.isVisible;
+            
+            if(modelChanged && visible) {
+               modelChanged = false;
+               if(model.state == FooterBannerModel.STATE_DEFAULT) {
+                  
+                  bannerContent.visible = bannerContent.includeInLayout = false;
+                  
+                  if(model.isShowingPTW) {
+                     message.text = BroLocale.getInstance().getText('footer.banner.message.default.ptw');
+                  }
+                  else if(model.selectedAsso && model.selectedAsso.info) {
+                     var assoName:String = model.selectedAsso.info.title;
+                     var treeName:String = model.selectedTree.title;
+                     if(model.selectedAsso.isUserRootAssociation()) {
+                        if(model.selectedTree.isAssociationRoot()) {
+                           message.text = BroLocale.getInstance().getText('footer.banner.message.default.userRoot', [assoName]);
+                        }else{
+                           message.text = BroLocale.getInstance().getText('footer.banner.message.default.userTree', [assoName]);
+                        }
+                     }else{
+                        if(model.selectedTree.isAssociationRoot()) {
+                           message.text = BroLocale.getInstance().getText('footer.banner.message.default.teamRoot', [assoName]);
+                        }else{
+                           message.text = BroLocale.getInstance().getText('footer.banner.message.default.teamTree', [treeName]);
+                        }
+                     }
+                  }else{
+                     message.text = "";
+                  }
+               } else {
+                  
+                  bannerContent.visible = bannerContent.includeInLayout = true;
+                  if(model.state == FooterBannerModel.STATE_PICK) {
+                     
+                     message.text = BroLocale.getInstance().getText('footer.banner.message.pick');
+                  }
+                  else if(model.state == FooterBannerModel.STATE_FULL) {
+                     
+                     message.text = BroLocale.getInstance().getText('footer.banner.message.full');
+                  }
+                  else if(model.state == FooterBannerModel.STATE_ONE_PEARL) {
+                     
+                     message.text = BroLocale.getInstance().getText('footer.banner.message.onePearl');
+                  }
+               }
+
+               updateTextPosition();
+               _currentState = model.state;
+            }
+         }
+         
+         override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void {
+            super.updateDisplayList(unscaledWidth, unscaledHeight);
+            if(model.state == FooterBannerModel.STATE_DEFAULT) {
+               message.maxWidth = stage.stageWidth;
+            }
+            else {
+               message.maxWidth = stage.stageWidth - getBannerLeftPosition() - MESSAGE_PADDING_LEFT;
+            }
+            updateTextPosition();
+            if(!_isPlayingBannerEffect) {
+               setStyle('left', getBannerLeftPosition());
+               
+            }
+
+         }
+         
+         private function onCreationComplete():void {
+            onModelChange(null);
+            
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            var footer:IFooter = am.components.pearlTreeViewer.vgraph.controls.footer;
+            footer.addEventListener(Footer.FOOTER_SHOW, onFooterVisibilityChange);
+            footer.addEventListener(Footer.FOOTER_HIDE, onFooterVisibilityChange);
+         }
+
+         private function onFooterVisibilityChange(event:Event):void {
+            var am:ApplicationManager = ApplicationManager.getInstance();
+            var footer:IFooter = am.components.pearlTreeViewer.vgraph.controls.footer;
+            
+            var parent:DisplayObjectContainer = this.parent;
+            if (parent) {
+               parent.removeChild(this);
+               if (event.type == Footer.FOOTER_SHOW) {
+                  
+                  parent.addChild(this);
+               } else if (event.type == Footer.FOOTER_HIDE) {
+                  
+                  parent.addChildAt(this, 0);
+               }
+               
+               am.components.pearlTreeViewer.vgraph.controls.invalidateDisplayList();
+            }
+         }
+
+         public function getTextFilters():Array{
+            return NavBar.getNavBarTextFilters(NavBar.FILTERS_NOT_OVER);
+         }
+         public function getTextFiltersOver():Array{
+            return NavBar.getNavBarTextFilters(NavBar.FILTERS_OVER);
+         }
+         
+         private function getBannerLeftPosition():Number {
+
+            return 0;
+         }
+
+         private function onClickJoinButton():void {
+            ApplicationManager.getInstance().menuActions.signUp();
+         }
+         private function updateTextPosition():void {
+            var x:Number = stage.stageWidth - message.measuredWidth;
+            
+            var topVBox:Number = 30;
+            var y:Number = topVBox + (bannerContent.height - topVBox- message.height) /2
+            var p:Point = globalToLocal(new Point(x / 2,0));
+            if (p.x < 0 ) {
+               p.x = 0;
+            } 
+            
+            message.move(p.x, y);
+         }
+         
+      ]]>
+   </mx:Script>
+   
+</mx:Canvas>

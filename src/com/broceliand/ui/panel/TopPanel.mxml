@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" 
+           xmlns:welcome="com.broceliand.ui.welcome.*" 
+           xmlns:panel="com.broceliand.ui.panel.*"            
+           xmlns:sticker="com.broceliand.ui.sticker.*" 
+           xmlns:eventBlocker="com.broceliand.ui.sticker.eventBlocker.*"  
+           xmlns:tools="com.broceliand.util.tools.*"
+           width="100%" height="100%"    
+           horizontalScrollPolicy="off" verticalScrollPolicy="off" 
+           creationComplete="onCreationComplete()" 
+           initialize="onInitialize()">
+   
+   <eventBlocker:EventBlocker id="mapEventBlocker" width="100%" height="100%"/>
+   
+   <tools:ToolsContainer id="toolsContainer" />
+   
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.extra.delegates.FaqDelegate;
+         import com.broceliand.extra.delegates.UIComponentDelegate;
+         import com.broceliand.pearlTree.io.loader.AccountManager;
+         import com.broceliand.ui.ComponentsAccessPoint;
+         import com.broceliand.ui.controller.startPolicy.StartPolicyLogger;
+         import com.broceliand.ui.faq.FaqTypes;
+         import com.broceliand.ui.faq.IFaq;
+         import com.broceliand.ui.highlight.HighlightCommands;
+         import com.broceliand.ui.sticker.eventBlocker.EventBlocker;
+         import com.broceliand.ui.welcome.HomePage;
+         import com.broceliand.ui.welcome.HomePageModel;
+         import com.broceliand.ui.welcome.HomeVideo;
+         import com.broceliand.ui.welcome.tunnel.TunnelNavigationModel;
+         import com.broceliand.util.GenericAction;
+         
+         import flash.utils.getTimer;
+         
+         import mx.core.UIComponent;
+         import mx.events.FlexEvent;
+         
+         private var _homePage:HomePage;
+         private var _faq:FaqDelegate;
+         private var _wantToKnowMore:FaqDelegate;
+         private var _mainPanel:MainPanel; 
+         private static const TRACE_DEBUG:Boolean = false;
+
+         private function onInitialize():void{
+            var comps:ComponentsAccessPoint = ApplicationManager.getInstance().components;
+            comps.topPanel = this;
+            homePageModel.addEventListener(Event.CHANGE, createHomeOnFirstVisibility);                         
+            homePageModel.addEventListener(Event.CHANGE, createFaqOnFirstVisibility);
+            homePageModel.addEventListener(Event.CHANGE, createWantToKnowMoreOnFirstVisibility);
+            homePageModel.dispatchEvent(new Event(Event.CHANGE));
+         }
+         
+         private function onCreationComplete():void {
+            if(TRACE_DEBUG) trace("[TOP PANEL] Creation Complete " +getTimer());
+         }
+         
+         public function createHomeOnFirstVisibility(event:Event):void {
+            if (homePageModel.visible) {
+               homePageModel.removeEventListener(Event.CHANGE, createHomeOnFirstVisibility);
+               showHomePage();
+            }
+         }
+         public function createFaqOnFirstVisibility(event:Event):void {
+            if (homePageModel.getFaqVisible(FaqTypes.TYPE_FAQ)) {
+               homePageModel.removeEventListener(Event.CHANGE, createFaqOnFirstVisibility);
+               _faq = new FaqDelegate();
+               _faq.setDataType(FaqTypes.TYPE_FAQ);
+               addChildAt(_faq, getChildIndex(mapEventBlocker));
+               _faq.show();
+               hideMainPanelWhileBuildingComponent(_faq);
+            }
+         }
+         public function createWantToKnowMoreOnFirstVisibility(event:Event):void {
+            if (homePageModel.getFaqVisible(FaqTypes.TYPE_WANTTOKNOWMORE)) {
+               homePageModel.removeEventListener(Event.CHANGE, createWantToKnowMoreOnFirstVisibility);
+               _wantToKnowMore = new FaqDelegate();
+               _wantToKnowMore.setDataType(FaqTypes.TYPE_WANTTOKNOWMORE);
+               addChildAt(_wantToKnowMore, getChildIndex(mapEventBlocker));
+               _wantToKnowMore.show();
+               hideMainPanelWhileBuildingComponent(_wantToKnowMore);
+            }
+         }
+         public function get mainPanel():MainPanel {
+            if (!_mainPanel) {
+               _mainPanel = new MainPanel();
+               _mainPanel.parentTopPanel = this;
+               addChildAt(mainPanel,0);
+            }
+            return _mainPanel;
+         }
+         public function showMainPanel():void{
+            mainPanel.visible = mainPanel.includeInLayout = true;
+         }
+         public function hideMainPanel():void{
+            mainPanel.visible = mainPanel.includeInLayout = false;
+         }
+         
+         /*public function showHomeVideo():void {
+         showHomePage();
+         _homePage.showHomeVideo();
+         }
+         
+         public function hideHomeVideo():void {
+         if(_homePage) {
+         _homePage.hideHomeVideo();
+         }
+         }*/
+
+         private function get homePageModel():HomePageModel {
+            return ApplicationManager.getInstance().visualModel.homePageModel;
+         }
+         private function showHomePage():void{
+            if (_homePage ==null) {
+               _homePage = new HomePage();
+               
+               _homePage.model = homePageModel;
+               hideMainPanelWhileBuildingComponent(_homePage);
+               if (!_faq && (!_wantToKnowMore || !_wantToKnowMore.parent)) {
+                  addChildAt(_homePage, getChildIndex(mapEventBlocker));
+               }  else {
+                  var minIndex:int = 10;
+                  if (_faq) {
+                     minIndex =getChildIndex(_faq); 
+                  } 
+                  if (_wantToKnowMore && _wantToKnowMore.parent) {
+                     minIndex = Math.min(minIndex, getChildIndex(_wantToKnowMore));
+                  }
+                  addChildAt(_homePage, minIndex);
+               }
+            }
+            _homePage.model.visible= true;
+         }         
+         private function hideMainPanelWhileBuildingComponent(comp:UIComponent):void {
+            hideMainPanel();
+            var action:GenericAction = new GenericAction(null, this, showMainPanel);
+            if(comp is UIComponentDelegate) {
+               comp.addEventListener(UIComponentDelegate.DELEGATE_CREATION_COMPLETE_EVENT, action.performActionOnFirstEvent);
+            }else{
+               comp.addEventListener(FlexEvent.CREATION_COMPLETE, action.performActionOnFirstEvent);
+            }
+         } 
+         
+         public function hideHomePage():void{
+            homePageModel.visible  = false;
+            
+         }           
+         public function get isSideBarVisible():Boolean {
+            return (homePageModel.visible);
+         }            
+         public function closeHome():void {
+            if(_homePage) {
+               _homePage.model.visible=false;
+               removeChild(_homePage);
+               _homePage.end();
+               _homePage= null;
+            }
+         }     
+         public function disableTopPanel(addWhitebackground:Boolean=false):void{
+            mapEventBlocker.setActive(true, addWhitebackground);
+         }
+         public function enableTopPanel():void{
+            mapEventBlocker.setActive(false);
+         }
+      ]]>
+   </mx:Script>           
+</mx:Canvas>

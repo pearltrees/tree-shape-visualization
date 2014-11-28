@@ -1,0 +1,1208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+           implements="com.broceliand.ui.navBar.INavBar"
+           xmlns:button="com.broceliand.ui.button.*" 
+           xmlns:premiumsymb="com.broceliand.ui.premiumsymbol.*" 
+           xmlns:base="com.broceliand.ui.pearlWindow.ui.base.*" 
+           xmlns:code="http://code.google.com/p/flexlib/"
+           visible="false"
+           includeInLayout="false"
+           verticalScrollPolicy="off"
+           horizontalScrollPolicy="off" 
+           xmlns:navBar="com.broceliand.ui.navBar.*"
+           xmlns:avatar="com.broceliand.ui.customization.avatar.*"
+           creationComplete="onCreationComplete()" 
+           updateComplete="onUpdateComplete()" xmlns:util="com.broceliand.ui.util.*"
+           clipContent="false"
+           >
+   
+   <mx:HBox id="mainContainer" 
+            verticalAlign="middle"
+            height="{NAVBAR_HEIGHT}"
+            horizontalGap="0"
+            paddingRight="20"
+            width="100%"
+            horizontalScrollPolicy="off"
+            verticalScrollPolicy="off"
+            alpha="0"
+            >
+      <mx:Image id="backImage"
+                source="{AssetsManager.getEmbededAsset(NavBarAssets.ITEM_BACK)}" 
+                click="onClickBackButton()"
+                rollOver="onRollOverBackControl(true)"
+                rollOut="onRollOverBackControl(false)"
+                />
+      <mx:Spacer id="backImageSpacer"
+                 width="1"
+                 visible="{backImage.visible}"
+                 includeInLayout="{backImage.includeInLayout}"/>
+
+      <mx:HBox id="homeContainer" verticalAlign="top">
+         
+         <mx:Image id="homeImage"
+                   source="{getHomeImageSource(false)}" 
+                   click="onClickHomeControl()"
+                   rollOver="onRollOverHomeControl()"
+                   rollOut="onRollOutHomeControl()"
+                   />
+      </mx:HBox>
+      
+      <button:PTButton id="anonymousButton" 
+                       click="onClickAnonymousButton()"
+                       skin="{AssetsManager.getEmbededAsset(NavBarAssets.LOGO_WITHOUT_PEARLTREES)}"
+                       downSkin="{AssetsManager.getEmbededAsset(NavBarAssets.LOGO_WITHOUT_PEARLTREES_HOVER)}"
+                       overSkin="{AssetsManager.getEmbededAsset(NavBarAssets.LOGO_WITHOUT_PEARLTREES_HOVER)}"
+                       visible="false"
+                       includeInLayout="false"
+                       />
+      
+      <mx:Spacer id="anonymousUserSpacer"
+                 width="15"
+                 visible="false"
+                 includeInLayout="false"/>
+      
+      <mx:HBox id="buttonsContainer" 
+               horizontalAlign="left" 
+               verticalAlign="middle" 
+               horizontalGap="-3"
+               height="100%"
+               horizontalScrollPolicy="off"
+               verticalScrollPolicy="off"
+               >
+         <!--
+         <mx:Spacer width="11" />
+         -->
+         <mx:HBox id="iconContainer"
+                  horizontalAlign="left" horizontalGap="0" 
+                  verticalAlign="middle"
+                  horizontalScrollPolicy="off"
+                  verticalScrollPolicy="off"
+                  > <!-- paddingRight replaces spacer to fix rollover bug -->
+            <mx:Canvas id="rootAvatarContainer" 
+                       rollOut="onRollOutIcons()" 
+                       rollOver="onRollOverIcons()" 
+                       click="onClickRootAvatar()"
+                       visible="false" 
+                       includeInLayout="false">
+               <mx:UIComponent id="rootAvatarBackground"
+                               visible="false" />      
+               <avatar:PTAvatar id="rootAvatarImage"
+                                left="10"
+                                top="8"
+                                size="{PTAvatar.SIZE_BIG}"
+                                shape="{PTAvatar.SHAPE_ROUND}"
+                                buttonMode="false" /> 
+               <mx:Image id="coeditMask"
+                         source="{AssetsManager.getEmbededAsset(NavBarAssets.TEAM_PUZZLE)}"
+                         top="1"
+                         left="1" 
+                         visible="false"
+                         includeInLayout="false" />
+               <!--<mx:Image id="privateMask"
+               visible="false"
+               includeInLayout="false" />-->
+               <mx:Image id="rootAvatarBorder"/>   
+            </mx:Canvas>
+            <mx:Canvas  id="userAvatarContainer"
+                        rollOut="onRollOutIcons()"
+                        rollOver="onRollOverIcons()"
+                        click="onClickUserAvatar()"
+                        visible="false"
+                        includeInLayout="false">
+               <mx:UIComponent id="userAvatarBackground"
+                               visible="false" />      
+               <avatar:PTAvatar id="userAvatarImage"
+                                left="10"
+                                top="8"
+                                size="{PTAvatar.SIZE_BIG}"
+                                shape="{PTAvatar.SHAPE_ROUND}"
+                                buttonMode="false" /> 
+               <mx:Image id="userAvatarBorder"/>   
+            </mx:Canvas>
+            <button:PTButton id="simpleIcon"
+                             click="onClickIcon()"
+                             rollOut="onRollOutIcons()"
+                             rollOver="onRollOverIcons()"
+                             visible="false"
+                             includeInLayout="false" />
+         </mx:HBox>
+         <!-- <mx:Spacer width="2" /> -->
+         <mx:HBox id="itemsContainer"
+                  height="100%"
+                  visible="true"
+                  verticalAlign="top"
+                  horizontalGap="0"
+                  horizontalScrollPolicy="off"
+                  verticalScrollPolicy="off"
+                  updateComplete="onItemsContainerUpdateComplete()"
+                  >
+            <mx:Repeater id="itemsRepeater"
+                         recycleChildren="true" 
+                         startingIndex="0" height="100%">
+               <navBar:NavBarItem click="onClickItem(event)"
+                                  rollOut="onRollOutItem(event)"
+                                  rollOver="onRollOverItem(event)"
+                                  item="{NavBarModelItem(itemsRepeater.currentItem)}"
+                                  fontFamily="{PTStyleManager.DEFAULT_FONT_FAMILY}"
+                                  index="{itemsRepeater.currentIndex}"
+                                  paddingTop="{TEXT_PADDING_TOP}" paddingLeft="0"/>
+            </mx:Repeater>
+            <premiumsymb:PTPremiumSymbolButtonInCanvas id="premiumSymbol"
+                                                       skin="{PTPremiumSymbolButton.SKIN_NAVBAR}"
+                                                       clickable="true"
+                                                       withOver="true"
+                                                       paddingTop="10"/>
+         </mx:HBox>
+         
+      </mx:HBox>    
+      
+      <!-- Add Pearl stuff -->
+      <!--
+      <mx:Spacer id="pearlAddSpacer" width="5" />
+      -->
+      <mx:HBox id="pearlAddContainer" 
+               verticalAlign="top" 
+               horizontalGap="-1"
+               click="onClickPearlAdd()" 
+               rollOver="onRollOverPearlAdd()"
+               rollOut="onRollOutPearlAdd()"
+               horizontalScrollPolicy="off"
+               verticalScrollPolicy="off"
+               >
+         <!--
+         <mx:Spacer width="12" />
+         -->
+         <mx:Image id="pearlAddImage" 
+                   source="{AssetsManager.getEmbededAsset(NavBarAssets.PEARL_ADD)}" />
+         <mx:Label id="pearlAddText"
+                   text="{BroLocale.getInstance().getText('navBar.pearlAdd')}"
+                   fontSize="{14}" color="#FFFFFF" filters="{getNavBarTextFilters()}"
+                   fontWeight="bold" paddingTop="{TEXT_PADDING_TOP}"
+                   fontFamily="{PTStyleManager.DEFAULT_FONT_FAMILY}"
+                   />
+      </mx:HBox>
+
+      <mx:VBox height="100%"
+               horizontalScrollPolicy="off"
+               verticalScrollPolicy="off"
+               verticalAlign="top">
+         <!--
+         <navBar:PTFacepile id="ptFacepile"
+         visible="false"
+         includeInLayout="false"
+         paddingLeft="10"
+         height="100%"
+         maxWidth="{mainContainer.width - homeImage.width - buttonsContainer.width - mostConnectedControl.width}"/>
+         -->
+      </mx:VBox>
+      <mx:HBox id="mostConnectedControl"
+               verticalAlign="top"
+               horizontalGap="-1"
+               click="onClickMostConnectedControl()"
+               rollOver="onRollOverMostConnectedControl()"
+               rollOut="onRollOutMostConnectedControl()"
+               horizontalScrollPolicy="off"
+               verticalScrollPolicy="off"
+               >
+         <!--
+         <mx:Spacer width="12" />
+         -->
+         <mx:Image id="mostConnectedImage" 
+                   source="{AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN)}" />
+         <mx:Label id="mostConnectedText" color="#FFFFFF"
+                   fontSize="{14}" filters="{getNavBarTextFilters()}"
+                   fontWeight="bold" paddingTop="{TEXT_PADDING_TOP}"
+                   fontFamily="{PTStyleManager.DEFAULT_FONT_FAMILY}"
+                   />
+      </mx:HBox>
+      
+      <mx:HBox id="pearlPickContainer" 
+               verticalAlign="top" 
+               horizontalGap="-1"
+               click="onClickPearlPick()" 
+               rollOver="rollOverPearlPickContainer(true)"
+               rollOut="rollOverPearlPickContainer(false)"
+               horizontalScrollPolicy="off"
+               verticalScrollPolicy="off"
+               visible="false"
+               >
+         <!--
+         <mx:Spacer width="12" />
+         -->
+         <mx:Image id="pearlPickImage" 
+                   source="{AssetsManager.getEmbededAsset(NavBarAssets.PEARL_PICK)}" />
+         <mx:Label id="pearlPickText"
+                   text="{BroLocale.getInstance().getText('navBar.pickPearltree')}"
+                   fontSize="{14}" color="#FFFFFF" filters="{getNavBarTextFilters()}"
+                   fontWeight="bold" paddingTop="{TEXT_PADDING_TOP}"
+                   fontFamily="{PTStyleManager.DEFAULT_FONT_FAMILY}"
+                   />
+      </mx:HBox>
+   </mx:HBox>
+   <util:NonScrollableText id="emptyMessage" y="{EMPTY_MESSAGE_TOP}"
+                           selectable="false"
+                           width="100%" paddingLeft="13"
+                           visible="false" includeInLayout="false"
+                           fontWeight="bold" fontSize="11"
+                           color="{ColorPalette.getInstance().pearltreesDarkColor}" 
+                           text="{BroLocale.getText('navBar.discover.emptyMessage')}"/>
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.ApplicationMessageBroadcaster;
+         import com.broceliand.assets.InfoPanelAssets;
+         import com.broceliand.assets.NavBarAssets;
+         import com.broceliand.assets.PearlAssets;
+         import com.broceliand.pearlTree.model.BroPearlTree;
+         import com.broceliand.pearlTree.model.UserGaugeModel;
+         import com.broceliand.pearlTree.navigation.INavigationManager;
+         import com.broceliand.pearlTree.navigation.NavigationEvent;
+         import com.broceliand.pearlTree.navigation.impl.NavigationHistoryModel;
+         import com.broceliand.pearlTree.navigation.impl.NavigationManagerImpl;
+         import com.broceliand.ui.PTStyleManager;
+         import com.broceliand.ui.controller.GoHomeAction;
+         import com.broceliand.ui.controller.IWindowController;
+         import com.broceliand.ui.controller.startPolicy.StartPolicyLogger;
+         import com.broceliand.ui.pearlWindow.PremiumWindowHelper;
+         import com.broceliand.ui.premiumsymbol.PTPremiumSymbolButton;
+         import com.broceliand.ui.premiumsymbol.PTPremiumSymbolButtonInCanvas;
+         import com.broceliand.ui.util.AssetsManager;
+         import com.broceliand.ui.util.ColorPalette;
+         import com.broceliand.ui.util.FiltersManager;
+         import com.broceliand.ui.util.VectorHelper;
+         import com.broceliand.ui.util.upload.FileUploadRequest;
+         import com.broceliand.ui.util.upload.FileUploadRequestFlash;
+         import com.broceliand.util.BroLocale;
+         import com.broceliand.util.GenericAction;
+         import com.broceliand.util.logging.BroLogger;
+         import com.broceliand.util.logging.Log;
+         
+         import mx.core.UIComponent;
+         import mx.events.FlexEvent;
+         
+         public static const ICON_AVATAR:uint = 1;
+         public static const ICON_SEARCH:uint = 2;
+         public static const ICON_MOST_CONNECTED:uint = 3;
+         public static const ICON_WHATS_HOT:uint = 4;
+         public static const ICON_SETTINGS:uint = 5;  
+         public static const ICON_HELP:uint = 6;
+         
+         private static const PADDING_INTER_CONTAINER : int = 12;
+         public static const NAVBAR_HEIGHT:Number = 57;
+         private static const TEXT_PADDING_TOP:int = 15;
+         private static const EMPTY_MESSAGE_TOP:int = 47;
+
+         public static const PEARLTREES_COLOR      : int = 0x505050;
+         public static const PEARLTREES_DARK_COLOR : int = 0x009EE0;
+         
+         private static const COLOR_OUT   : int = 0xFFFFFF;
+         private static const COLOR_HOVER : int = 0xFFFFFF;
+         private static const COLOR_FILTER : int = 0x000000;
+         public static const FILTERS_NOT_OVER: uint = 0;
+         public static const FILTERS_OVER: uint = 1;
+         
+         private var _model:INavBarModel;
+         private var modelChanged:Boolean;
+         
+         private var _waitForNextItemsContainerUpdateComplete : Boolean = false;
+         private var _waitForNextUpdateComplete : Boolean = false;
+         private var _waitForNextUpdateDisplayList : Boolean = false;
+         private var _lastWidthMeasured:Number;
+         private var _realWidth:Number;
+         private var _resizeItemsOnUpdateDisplay:Boolean;
+         private var _coeditFilterColor:uint;
+         
+         private var _isReadyToShow:Boolean;
+         private const DEBUG : Boolean = false;
+         private const FRAME_DEBUG : Boolean = false;
+
+         private var am               : ApplicationManager = ApplicationManager.getInstance();
+         private var spl              : StartPolicyLogger  = StartPolicyLogger.getInstance();
+         private var navModel         : INavigationManager = am.visualModel.navigationModel;
+         private var windowController : IWindowController  = am.components.windowController;
+         private var navigationModel  : INavigationManager = am.visualModel.navigationModel;
+         private var mainPanel        : UIComponent        = am.components.topPanel.mainPanel;
+         private var myStage          : Stage              = ApplicationManager.flexApplication.stage;
+         
+         private var _startAnonymous : Boolean = false;
+         private var _frameNumber : int = 0;
+         
+         private var logger:BroLogger = Log.getLogger("com.broceliand.ui.navBar");
+
+         public function get model():INavBarModel {
+            return _model;
+         }
+         
+         public function set model(value:INavBarModel):void {
+            if(value != _model) {
+               if(_model) {
+                  _model.removeEventListener(NavBarModelEvent.MODEL_CHANGE, onModelChange);
+               }
+               _model = value;
+               if(_model) {
+                  _model.addEventListener(NavBarModelEvent.MODEL_CHANGE, onModelChange);
+               }
+               onModelChange(null);
+               notifyStatDiscoverViaTree(value);
+            }
+         }
+         
+         private function onModelChange(event:Event):void {            
+            modelChanged = true;
+            invalidateProperties();
+            invalidateSize();
+            invalidateDisplayList();
+         }
+         
+         private function log( str : String) : void {
+            logger.info(str);
+         }
+         
+         private function debug(str : String) : void {
+            if (DEBUG) trace(str);
+         }
+
+         private function showHomeImage() : Boolean {
+            if (!isSelectedTreeInMyHome()) return true; 
+            if (model.avatarTree.isTeamRoot()) return true; 
+            return false;
+         }
+
+         private function showBackImage() : Boolean {
+            if (model.iconType == ICON_SETTINGS) {
+               return false;
+            }
+            var navHistory:NavigationHistoryModel = ApplicationManager.getInstance().visualModel.navigationModel.getNavigationHistoryModel();
+            if (!navHistory.hasBack()) {
+               return false;
+            }
+            if (isAnonymous()) {
+               return true;
+            }
+            if (showHomeImage()) {
+               return true;
+            }
+            if (navHistory.isLastItemIsSearch()) {
+               return true;
+            }
+            return false;
+         }
+         
+         private function isSelectedTreeInMyHome(): Boolean {
+            if (!model) return false;
+            if (model.iconType != ICON_AVATAR) return false;
+            if (!model.avatarTree) return false;
+            if (!model.avatarTree.getMyAssociation()) return false;
+            return model.avatarTree.getMyAssociation().isMyAssociation();
+         }
+         
+         private function commitIconAvatarProperties():void {
+            if(model.avatarTree) {
+               rootAvatarContainer.visible = rootAvatarContainer.includeInLayout = true;
+               rootAvatarImage.tree = model.avatarTree;
+               var isCoedited:Boolean = model.avatarTree.isTeamRoot();
+               var isPrivate:Boolean = model.avatarTree.isPrivate();
+               coeditMask.visible = coeditMask.includeInLayout = isCoedited;
+
+               var newColor:uint = model.getPuzzleColor();
+               if (newColor != _coeditFilterColor) {
+                  _coeditFilterColor = newColor;
+                  coeditMask.filters = [FiltersManager.getColorizeFilter(_coeditFilterColor)];
+               }
+               
+               if (model.avatarTree.isInATeam() && model.avatarTree.getMyAssociation().isMyAssociation()){
+                  userAvatarContainer.visible = userAvatarContainer.includeInLayout = true;
+                  userAvatarImage.tree = am.currentUser.userWorld.refTree;
+                  userAvatarImage.user = am.currentUser;
+                  userAvatarImage.refreshImage();                                    
+               }
+               else {
+                  userAvatarContainer.visible = userAvatarContainer.includeInLayout = false;
+               }
+            } 
+            else {
+               rootAvatarContainer.visible = rootAvatarContainer.includeInLayout = false;
+               userAvatarContainer.visible = userAvatarContainer.includeInLayout = false;
+               rootAvatarImage.tree = null;
+               rootAvatarImage.user = null;
+               rootAvatarContainer.toolTip = null;
+            }
+            rollOverMostConnectedControl(false);
+            rollOverItemsContainer(false);
+         }
+         private function commitSearchProperties():void {
+            simpleIcon.setStyle('skin',     AssetsManager.getEmbededAsset(NavBarAssets.SEARCH));
+            simpleIcon.setStyle('overSkin', AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_HOVER));
+            simpleIcon.setStyle('downSkin', AssetsManager.getEmbededAsset(NavBarAssets.SEARCH_HOVER));
+            simpleIcon.visible = simpleIcon.includeInLayout = model.isSimpleButtonDisplayed;
+            mostConnectedControl.visible = mostConnectedControl.includeInLayout = false;
+            rootAvatarContainer.visible= rootAvatarContainer.includeInLayout = false;
+            userAvatarContainer.visible = userAvatarContainer.includeInLayout = false;
+         }
+         private function commitMostConnectedProperties():void {
+            
+            if (isUserLogged()){
+               simpleIcon.setStyle('skin',     AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN));
+               simpleIcon.setStyle('overSkin', AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN_HOVER));
+               simpleIcon.setStyle('downSkin', AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN_HOVER));
+            } else {
+               simpleIcon.setStyle('skin',     AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_GREY));
+               simpleIcon.setStyle('overSkin', AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN));
+               simpleIcon.setStyle('downSkin', AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN));
+            }
+            simpleIcon.visible = simpleIcon.includeInLayout = model.isSimpleButtonDisplayed;
+            mostConnectedControl.visible = mostConnectedControl.includeInLayout = false;
+            rootAvatarContainer.visible= rootAvatarContainer.includeInLayout = false;
+            userAvatarContainer.visible = userAvatarContainer.includeInLayout = false;
+         }
+         
+         private function commitAnonymousProperties():void {
+            if (isAnonymous()){
+               homeContainer.visible = homeContainer.includeInLayout = ApplicationManager.getInstance().isWhiteMark();
+               anonymousButton.visible = anonymousButton.includeInLayout = false;
+               anonymousUserSpacer.visible = anonymousUserSpacer.includeInLayout = false;
+               mostConnectedText.setStyle('fontWeight', 'normal');               
+            } else {
+               homeContainer.visible = homeContainer.includeInLayout = showHomeImage();  
+               anonymousButton.visible = anonymousButton.includeInLayout = false;
+               anonymousUserSpacer.visible = anonymousUserSpacer.includeInLayout = false;
+               mostConnectedText.setStyle('fontWeight', 'bold');
+            }  
+            backImage.visible = backImage.includeInLayout = showBackImage();
+         }
+         
+         private function onUpdateComplete():void {
+            log("onUpdateComplete()");
+            if (_waitForNextUpdateComplete && !_waitForNextUpdateDisplayList && !_waitForNextItemsContainerUpdateComplete) {
+               _waitForNextUpdateComplete = false;
+               
+               log("   ...setting the whole thing visible");
+               visible = includeInLayout = true;
+               mainContainer.alpha= 1;
+            }
+         }
+         
+         private function onItemsContainerUpdateComplete():void {
+            log("onItemsContainerUpdateComplete()");
+            if (_waitForNextItemsContainerUpdateComplete) {
+               _waitForNextItemsContainerUpdateComplete = false;
+               
+               log("   => false");
+               if (!_waitForNextUpdateComplete) {
+                  visible = includeInLayout = true;
+                  mainContainer.alpha = 1;
+               }
+            }
+         }
+         
+         override protected function commitProperties():void {            
+            super.commitProperties();            
+            
+            var justLogged : Boolean = false;
+            
+            if (_startAnonymous && isUserLogged()) {
+               log("Just switched to user-logged mode!");
+               if (DEBUG && FRAME_DEBUG) addFollowingListener();
+               updatePaddingInterContainer();
+               _startAnonymous = false;
+               justLogged = true;
+            }
+            
+            updateAddPearlAction();
+
+            var shouldBeVisible : Boolean = (model && model.isVisible);
+            var becomingVisible : Boolean = (!visible && shouldBeVisible) || justLogged;
+            
+            if (model && !model.useLargeGap){
+               itemsContainer.setStyle("horizontalGap",0);
+            }else{
+               itemsContainer.setStyle("horizontalGap",12);
+            }
+            
+            if(processedDescriptors && modelChanged && shouldBeVisible) {
+               
+               iconContainer.visible = true;
+               itemsContainer.visible = true;
+               
+               modelChanged = false;                 
+               mostConnectedControl.visible = mostConnectedControl.includeInLayout = model.isMostConnectedButtonDisplayed;
+
+               itemsRepeater.dataProvider = VectorHelper.vectorToArray(model.items);
+               
+               if (justLogged) { 
+                  
+                  _waitForNextUpdateComplete = true;
+                  _waitForNextUpdateDisplayList = true;
+                  _waitForNextItemsContainerUpdateComplete = true;
+               }
+               else if (becomingVisible) {
+                  
+                  _waitForNextItemsContainerUpdateComplete = true;
+                  
+               }
+               else {
+                  
+                  mainContainer.alpha = shouldBeVisible ? 1:0;
+               }
+               
+               simpleIcon.visible = simpleIcon.includeInLayout = false;
+               rootAvatarContainer.visible = rootAvatarContainer.includeInLayout = false;
+               userAvatarContainer.visible = userAvatarContainer.includeInLayout = true;
+               
+               var textKey:String = "navBar.mostConnected";
+               var compactMode:uint = model.compactMode;
+               if (compactMode == NavBarModel.ICON_AND_MOST_CONNECTED_WITHOUT_PEARLTREE_MODE){
+                  textKey = "navBar.mostConnected.short";
+               } else if (compactMode == NavBarModel.WITHOUT_MOST_CONNECTED_MODE){
+                  textKey = "";
+               }
+               mostConnectedText.text = BroLocale.getInstance().getText(textKey);
+               
+               commitAnonymousProperties();
+               
+               if(model.iconType == ICON_AVATAR) {
+                  commitIconAvatarProperties();
+               }
+               else if(model.iconType == ICON_SEARCH) {
+                  commitSearchProperties();
+               }
+               else if(model.iconType == ICON_MOST_CONNECTED) {
+                  commitMostConnectedProperties();
+               }     
+               else if(model.iconType == ICON_WHATS_HOT) {
+                  commmitWhatsHotProperties();
+               }
+               else if(model.iconType == ICON_SETTINGS) {
+                  commitIconSettings();
+               }
+               else if(model.iconType == ICON_HELP) { 
+                  commitIconHelp();
+               }
+               premiumSymbol.visible = premiumSymbol.includeInLayout = model.withPremiumSymbol;
+            }
+         }
+         
+         private function commmitWhatsHotProperties():void {
+            if (isUserLogged()){
+               simpleIcon.setStyle('skin',     AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN));
+               simpleIcon.setStyle('overSkin', AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN_HOVER));
+               simpleIcon.setStyle('downSkin', AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN_HOVER));
+               simpleIcon.visible = simpleIcon.includeInLayout = model.isSimpleButtonDisplayed;
+            } else {
+               simpleIcon.visible = simpleIcon.includeInLayout = false;
+            }
+            mostConnectedControl.visible = mostConnectedControl.includeInLayout = false;
+            rootAvatarContainer.visible= rootAvatarContainer.includeInLayout = false;
+            userAvatarContainer.visible = userAvatarContainer.includeInLayout = false;
+         }
+         
+         private function commitIconSettings():void {
+            simpleIcon.setStyle('skin',     AssetsManager.getEmbededAsset(NavBarAssets.SETTINGS));
+            simpleIcon.setStyle('overSkin', AssetsManager.getEmbededAsset(NavBarAssets.SETTINGS));
+            simpleIcon.setStyle('downSkin', AssetsManager.getEmbededAsset(NavBarAssets.SETTINGS));
+            simpleIcon.visible = simpleIcon.includeInLayout = model.isSimpleButtonDisplayed;
+            mostConnectedControl.visible = mostConnectedControl.includeInLayout = false;
+            rootAvatarContainer.visible= rootAvatarContainer.includeInLayout = false;
+            userAvatarContainer.visible = userAvatarContainer.includeInLayout = false;
+         }
+         
+         private function commitIconHelp():void {
+            simpleIcon.setStyle('skin', AssetsManager.getEmbededAsset(NavBarAssets.HELP));
+            simpleIcon.setStyle('overSkin', AssetsManager.getEmbededAsset(NavBarAssets.HELP));
+            simpleIcon.setStyle('downSkin', AssetsManager.getEmbededAsset(NavBarAssets.HELP));
+            simpleIcon.visible = simpleIcon.includeInLayout = model.isSimpleButtonDisplayed;
+            mostConnectedControl.visible = mostConnectedControl.includeInLayout = false;
+            rootAvatarContainer.visible= rootAvatarContainer.includeInLayout = false;
+            userAvatarContainer.visible = userAvatarContainer.includeInLayout = false;
+         }
+         
+         override protected function measure():void {
+            super.measure();
+            
+            var newRealWidth:Number = measuredWidth - itemsContainer.measuredWidth;
+            var createdItems:Array = itemsContainer.getChildren();
+            for(var i:uint=0; i < createdItems.length; i++) {
+               var itemView:NavBarItem = createdItems[i] as NavBarItem;
+               if (itemView) {
+                  newRealWidth += itemView.measuredMinWidth;
+               }
+            }
+            
+            var nComponents : int = createdItems.length;
+            if (mostConnectedControl.visible && mostConnectedText.visible) {
+               nComponents ++;
+            }
+            if (pearlAddContainer.visible && pearlAddText.visible) {
+               nComponents ++;
+            }
+            var shouldResizeItemsOnUpdateDisplay : Boolean;
+            
+            shouldResizeItemsOnUpdateDisplay = (newRealWidth > (_realWidth + nComponents)) || (_realWidth > (newRealWidth + nComponents)) 
+            
+            if(newRealWidth != _realWidth) {
+               
+               _realWidth = newRealWidth;
+               _resizeItemsOnUpdateDisplay = shouldResizeItemsOnUpdateDisplay;
+            }
+            else {
+               
+            }
+         }
+
+         private function resizeComponent(
+            component       : UIComponent, 
+            resizableWidth : Number, 
+            widthDiff      : Number, 
+            shouldResize   : Boolean,
+            componentName  : String = ""
+         ) : void {
+
+            var widthToResize : Number = Math.round((component.measuredMinWidth / resizableWidth) * widthDiff);
+            var newWidth      : Number = component.measuredMinWidth;
+            if(widthToResize > 0) {
+               newWidth -= widthToResize;
+            }
+            if(newWidth < component.minWidth) {
+               newWidth = component.minWidth;
+            }
+            if(component.width != newWidth) {
+               if (shouldResize) {
+                  
+                  component.setActualSize(newWidth, component.height);
+                  
+               }else if(!isNaN(component.explicitWidth)) {
+                  component.width = Number.NaN;
+                  
+               }
+            }
+            else {
+               
+            }
+         }
+         
+         override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void {
+            log("updateDisplayList()");
+            if( (_lastWidthMeasured != unscaledWidth) || _resizeItemsOnUpdateDisplay) {
+               
+               if(_lastWidthMeasured != unscaledWidth) {
+                  
+               }
+               else {
+                  
+               }
+               
+               var componentName : String = ""; 
+               _resizeItemsOnUpdateDisplay = false;
+               _lastWidthMeasured = unscaledWidth;
+               
+               var widthDiff:Number = _realWidth - unscaledWidth;
+               
+               var shouldResize:Boolean = (widthDiff > 0);
+               var createdItems:Array = itemsContainer.getChildren();
+
+               if(createdItems && createdItems.length > 0) {
+                  var itemView:NavBarItem;
+                  var itemModel:NavBarModelItem;
+
+                  var resizableWidth:Number = 0;
+                  var resizableItems:Number = 0;
+                  for(var i:uint=0; i < createdItems.length; i++) {
+                     itemView = createdItems[i] as NavBarItem;
+                     if (itemView) {
+                        itemModel = itemView.item;
+                        if(itemModel.resizeToFit) {
+                           resizableItems += 1;
+                           resizableWidth += itemView.measuredMinWidth;
+                           
+                        }
+                     }
+                  }
+
+                  if (mostConnectedControl.visible && mostConnectedText.visible) {
+                     resizableItems += 1;
+                     resizableWidth += mostConnectedText.measuredMinWidth;                     
+                     
+                  }
+                  if (pearlAddContainer.visible && pearlAddText.visible) {
+                     resizableItems += 1;
+                     resizableWidth += pearlAddText.measuredMinWidth;
+                     
+                  }
+
+                  for(i=0; i < createdItems.length; i++) {
+                     itemView = createdItems[i] as NavBarItem;
+                     if (itemView) {
+                        itemModel = itemView.item;
+                        if(itemModel.resizeToFit) {
+                           if (DEBUG) componentName = "item " + (i+1) + "/" + createdItems.length;
+                           resizeComponent(itemView, resizableWidth, widthDiff, shouldResize, componentName);
+                        }
+
+                        itemView.systemFontFamily = model.isTeamNameOrSearchResult;
+                     }
+                  }
+                  if (mostConnectedControl.visible && mostConnectedText.visible) {
+                     if (DEBUG) componentName = "mostConnectedText";
+                     resizeComponent(mostConnectedText, resizableWidth, widthDiff, shouldResize, componentName);
+                  }
+                  if (pearlAddContainer.visible && pearlAddText.visible) {
+                     if (DEBUG) componentName = "pearlAddText";
+                     resizeComponent(pearlAddText, resizableWidth, widthDiff, shouldResize, componentName);
+                  }                  
+               }
+            }
+            super.updateDisplayList(unscaledWidth, unscaledHeight);
+            if (_waitForNextUpdateDisplayList) {
+               log("   => false");
+               _waitForNextUpdateDisplayList = false;
+            }
+         }
+         
+         private function addFollowingListener():void {
+            if (DEBUG) {
+               myStage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+            }
+         }
+         private function removeFollowingListener():void {
+            if (DEBUG) {
+               myStage.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
+            }
+         }
+         
+         private function onEnterFrame(event : Event = null) : void {
+            _frameNumber ++;
+            
+         }
+         
+         private function updatePaddingInterContainer() : void {
+            if (isUserLogged()) {
+               homeContainer.setStyle("paddingRight", PADDING_INTER_CONTAINER-10);
+               mostConnectedControl.setStyle("paddingRight", PADDING_INTER_CONTAINER);
+            }
+            itemsContainer.setStyle("paddingRight", PADDING_INTER_CONTAINER);
+         }
+         
+         private function onCreationComplete():void {
+            if(rootAvatarBorder) {
+               drawRootAvatarBorder();
+               drawUserAvatarBorder();
+               
+            }
+            am.visualModel.applicationMessageBroadcaster.addEventListener(ApplicationMessageBroadcaster.WHITE_MARK_CHANGED_EVENT, onWhiteMarkChanged);
+            _startAnonymous = isAnonymous();
+            if (_startAnonymous) {
+               log("Starting anonymously!");
+            }
+            am.avatarManager.addEventListener(FileUploadRequest.PROCESSING_COMPLETE_EVENT, onAvatarChange);
+            am.currentUser.addEventListener(FlexEvent.INIT_COMPLETE, onModelChange);
+
+            updatePaddingInterContainer();
+            visible = includeInLayout = model && model.isVisible;
+         }
+         
+         private function onAvatarChange(event:Event):void {
+            rootAvatarImage.refreshImage();
+         }
+         
+         private function onWhiteMarkChanged(event:Event):void {
+            
+            if (homeImage) {
+               homeImage.source = getHomeImageSource(false);
+            }
+         }
+         
+         public static function getNavBarTextFilters(over:uint = FILTERS_NOT_OVER):Array{
+            over = FILTERS_NOT_OVER; 
+            var color:Number = (over==FILTERS_OVER) ? PEARLTREES_DARK_COLOR : COLOR_FILTER;
+            var alphaGlow:Number = 0.30;
+            var blurXGlow:Number = 6;
+            var blurYGlow:Number = 6;
+            var strengthGlow:Number = (over==FILTERS_OVER) ? 5 : 2;
+            var strengthDrop:Number = (over==FILTERS_OVER) ? 1.5 : 0.85;
+            var inner:Boolean = false;
+            var knockout:Boolean = false;
+            var quality:Number = BitmapFilterQuality.LOW;
+            var filter:GlowFilter = new GlowFilter(color, alphaGlow, blurXGlow, blurYGlow, strengthGlow, quality, inner, knockout);
+            var ret:Array = new Array();
+            ret.push(filter);
+            var dropShadowFilter:DropShadowFilter = new DropShadowFilter(2, 90, color, 0.94, 3, 6, strengthDrop, BitmapFilterQuality.LOW);
+            ret.push(dropShadowFilter);
+            return ret;
+         }      
+         
+         private function drawRootAvatarBorder(isOver:Boolean=false):void {
+            if (isOver){
+               
+               rootAvatarImage.size = PTAvatar.SIZE_BIG_OVER;
+               rootAvatarBorder.source=AssetsManager.getEmbededAsset(NavBarAssets.AVATAR_MASK_OVER);
+               rootAvatarImage.setStyle('top', 6);
+               rootAvatarImage.setStyle('left', 7);
+            }else{
+               rootAvatarImage.size = PTAvatar.SIZE_BIG;
+               rootAvatarBorder.source=AssetsManager.getEmbededAsset(NavBarAssets.AVATAR_MASK);
+               rootAvatarImage.setStyle('top', 8);
+               rootAvatarImage.setStyle('left', 10);
+            }  
+         }
+         
+         private function drawUserAvatarBorder(isOver:Boolean=false):void {
+            if (isOver){
+               
+               userAvatarImage.size = PTAvatar.SIZE_BIG_OVER;
+               userAvatarBorder.source=AssetsManager.getEmbededAsset(NavBarAssets.AVATAR_MASK_OVER);
+               userAvatarImage.setStyle('top', 6);
+               userAvatarImage.setStyle('left', 7);
+            }else{
+               userAvatarImage.size = PTAvatar.SIZE_BIG;
+               userAvatarBorder.source=AssetsManager.getEmbededAsset(NavBarAssets.AVATAR_MASK);
+               userAvatarImage.setStyle('top', 8);
+               userAvatarImage.setStyle('left', 10);
+            }
+         }
+
+         private function isInsideMyAccount() : Boolean {
+            var targetTree : BroPearlTree = null;
+            targetTree = navModel.getSelectedTree();
+            if (!targetTree) {
+               targetTree= navModel.getFocusedTree();
+            }
+            return (targetTree != null) && (targetTree.getMyAssociation() != null) && 
+               targetTree.getMyAssociation().isMyAssociation();
+         }
+         
+         private function isOnUserRoot() : Boolean {
+            var targetTree : BroPearlTree = null;
+            targetTree = navModel.getFocusedTree();
+            if (targetTree) {
+               return targetTree.isUserRoot();
+            }
+            return false;
+         }
+         
+         private function updateAddPearlAction():void {
+            
+            if (!processedDescriptors || !spl.isUserAuthenticated()) return;
+            var pearlAddVisible : Boolean = isUserLogged() && !am.isEmbed() && (model && model.iconType == ICON_AVATAR);
+            pearlAddContainer.visible = pearlAddContainer.includeInLayout = isInsideMyAccount() && pearlAddVisible;
+            if (isInsideMyAccount()) {
+               pearlPickContainer.visible = pearlPickContainer.includeInLayout = false;
+            } 
+            else {
+               refreshPickAvailable();
+            }
+         }
+         
+         private function refreshPickAvailable():void {
+            var userGaugeModel:UserGaugeModel = ApplicationManager.getInstance().currentUser.userGaugeModel();
+            var notOverMaxAction:GenericAction = new GenericAction(null, this, showPickContainerIfPossible);
+            var overMaxAction:GenericAction = new GenericAction(null, this, hidePickContainer);
+            userGaugeModel.performActionIfNotOverMax(notOverMaxAction, overMaxAction, false);
+         }
+         
+         private function showPickContainerIfPossible():void {
+            var pearlAddVisible : Boolean = isUserLogged() && !am.isEmbed() && (model && model.iconType == ICON_AVATAR);
+            pearlPickContainer.visible = pearlPickContainer.includeInLayout = !isInsideMyAccount() && pearlAddVisible && !isOnUserRoot();
+            return;
+         }
+         
+         private function hidePickContainer():void {
+            pearlPickContainer.visible = false;
+         }
+         
+         private function updateAddButtonStyle():void {
+            if (!pearlAddImage) return;
+         }
+         
+         private function clearSelection():void{
+            am.visualModel.selectionModel.selectNode(null,-1);
+         }
+         
+         /*private function updatePadlockAssets():void {
+         if (model.avatarTree.isAssociationRoot()) {
+         privateMask.source = AssetsManager.getEmbededAsset(PearlAssets.PRIVATE_PADLOCK_SMALL_ACTIVE);
+         privateMask.setStyle("top", 20);
+         privateMask.setStyle("left", 20);
+         } else {
+         privateMask.source = AssetsManager.getEmbededAsset(PearlAssets.PRIVATE_PADLOCK_SMALL_ACTIVE);
+         privateMask.setStyle("top", 25);
+         privateMask.setStyle("left", 22);
+         }
+         }*/
+
+         private function closeCreationWindowIfNeeded() : void {
+            if (model.iconType == ICON_AVATAR) { 
+               windowController.closeAnyCreationWindowOpen();
+            }
+         }
+         
+         private function onClickItem(event:Event):void {
+            var itemClicked:NavBarModelItem = UIComponent(event.currentTarget).getRepeaterItem() as NavBarModelItem;
+            model.performItemAction(itemClicked);
+            closeCreationWindowIfNeeded();
+         }
+         
+         private function onClickAnonymousButton():void {
+            am.components.settings.visible = false;
+            am.menuActions.signUp();
+            am.components.windowController.closeAllWindows();
+         }
+         private function onClickBackButton():void {
+            am.components.settings.visible = false;
+            rollOverItemsContainer(false);
+            rollOverMostConnectedControl(false);
+            am.visualModel.navigationModel.getNavigationHistoryModel().goBack();
+         }
+         
+         private function onClickHomeControl():void {
+            am.components.settings.visible = false;
+            rollOverItemsContainer(false);
+            rollOverMostConnectedControl(false);
+            new GoHomeAction().performAction();
+         }
+         
+         private function onClickRootAvatar():void {
+            if (model.iconType == ICON_AVATAR) {
+               var items : Vector.<NavBarModelItem> = model.items;
+               if (items.length > 0) {
+                  var firstItem : NavBarModelItem = items[0];
+                  model.performItemAction(firstItem);
+                  closeCreationWindowIfNeeded();
+                  return;
+               }
+            }
+            model.performIconAction();
+         }
+         private function onClickUserAvatar():void {
+            onClickRootAvatar();
+         }         
+         private function onClickIcon():void {
+            onClickRootAvatar();
+         }
+         
+         private function rollOverPearlAddContainer(value : Boolean) : void {
+            
+            if (value) {
+               pearlAddText.filters = getNavBarTextFilters(FILTERS_NOT_OVER);
+               pearlAddImage.source = AssetsManager.getEmbededAsset(NavBarAssets.PEARL_ADD_HOVER);
+            }
+            else {
+               pearlAddText.filters = getNavBarTextFilters(FILTERS_NOT_OVER);
+               pearlAddImage.source = AssetsManager.getEmbededAsset(NavBarAssets.PEARL_ADD);
+            }
+         }
+         
+         private function rollOverPearlPickContainer(value : Boolean) : void {
+            
+            if (value) {
+               pearlPickText.filters = getNavBarTextFilters(FILTERS_NOT_OVER);
+               pearlPickImage.source = AssetsManager.getEmbededAsset(NavBarAssets.PEARL_PICK_HOVER);
+            }
+            else {
+               pearlPickText.filters = getNavBarTextFilters(FILTERS_NOT_OVER);
+               pearlPickImage.source = AssetsManager.getEmbededAsset(NavBarAssets.PEARL_PICK);
+            }
+         }
+         
+         private function rollOverItemsContainer(value : Boolean) : void {
+            var createdItems:Array = itemsContainer.getChildren();               
+            for(var i:uint=0; i < createdItems.length; i++) {
+               var itemView:NavBarItem = createdItems[i] as NavBarItem;
+               if (itemView) {
+                  itemView.rollOverStyle = value;
+               }
+            }
+         }
+         
+         private function isAnonymous() : Boolean {
+            var res : Boolean = am.currentUser.isAnonymous();
+            return res;
+         }
+         
+         private function isUserLogged() : Boolean {
+            return !isAnonymous();
+         }
+         
+         private function rollOverMostConnectedControl(value : Boolean) : void {
+            if (value) {
+               mostConnectedText.filters = getNavBarTextFilters(FILTERS_NOT_OVER);
+               mostConnectedImage.source = AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN_HOVER);
+            }
+            else {
+               mostConnectedText.filters = getNavBarTextFilters(FILTERS_NOT_OVER);
+               mostConnectedImage.source = AssetsManager.getEmbededAsset(NavBarAssets.ITEM_DISCOVER_CYAN);
+            }
+         }
+         
+         private function getHomeImageSource(isOver:Boolean):Class {
+            var result:Class;
+            if (ApplicationManager.getInstance().currentUser.isAnonymous() && ApplicationManager.getInstance().isWhiteMark()) {
+               if (isOver) {
+                  result  = AssetsManager.getEmbededAsset(NavBarAssets.PEARL_PICK_HOVER);
+               }
+               else {
+                  result = AssetsManager.getEmbededAsset(NavBarAssets.PEARL_PICK);
+               }   
+               
+            }
+            else {
+               if (isOver) {
+                  result  = AssetsManager.getEmbededAsset(NavBarAssets.ITEM_HOME_OVER);
+               }
+               else {
+                  result = AssetsManager.getEmbededAsset(NavBarAssets.ITEM_HOME);
+               }   
+            }
+            return result;
+         }
+         
+         private function rollOverHomeControl(value : Boolean) : void {
+            homeImage.source = getHomeImageSource(value);
+         }
+
+         private function onRollOverMostConnectedControl() : void {
+            if( model.iconType != ICON_MOST_CONNECTED ) {
+               rollOverMostConnectedControl(true);
+            }
+         }
+         
+         private function onRollOutMostConnectedControl() : void {
+            if( model.iconType != ICON_MOST_CONNECTED ) {
+               rollOverMostConnectedControl(false);
+            }
+         }
+         private function onRollOverBackControl(isOver:Boolean):void {
+            if (isOver) {
+               backImage.source = AssetsManager.getEmbededAsset(NavBarAssets.ITEM_BACK_OVER);
+            } else {
+               backImage.source = AssetsManager.getEmbededAsset(NavBarAssets.ITEM_BACK);
+            }
+         }
+         
+         private function onRollOverHomeControl() : void {
+            rollOverHomeControl(true);
+         }
+         
+         private function onRollOutHomeControl() : void {
+            rollOverHomeControl(false);
+         }
+         
+         private function onClickMostConnectedControl(event:MouseEvent = null):void {
+            model.navigateToMostConnectedTrees(); 
+         }
+         
+         private function onRollOverPearlAdd() : void {
+            rollOverPearlAddContainer(true);
+         }
+
+         private function onRollOutPearlAdd() : void {
+            rollOverPearlAddContainer(false);
+         }
+         
+         private function onClickPearlAdd(event:MouseEvent = null):void {
+            clearSelection();
+            if (navModel.getFocusedTree().isPrivatePearltreeOfCurrentUserNotPremium()) {
+               PremiumWindowHelper.openPremiumExpiredPage(BroLocale.getText("pw.panel.newPearltree.title"));
+            } else {
+               if (windowController.isAnyCreationWindowOpen()) {
+                  windowController.closeAnyCreationWindowOpen();
+               } else {
+                  windowController.openAddPearlsCoverWindow();
+               }
+            }
+         }
+         
+         private function onClickPearlPick(event:MouseEvent = null):void {
+            clearSelection();
+            windowController.displayPickNodeTo(navModel.getFocusedTree().getRootNode().graphNode, true, true);
+         }
+         
+         private function onRollOverItem(event:Event):void{
+            var item:NavBarItem = event.currentTarget as NavBarItem;
+            item.rollOverStyle=true;
+            if ((item.index==0)&&(model.iconActionOnFirstItem)){
+               simpleIcon.highlight();
+               drawRootAvatarBorder(true);
+               drawUserAvatarBorder(true);
+               coeditMask.source = AssetsManager.getEmbededAsset(NavBarAssets.TEAM_PUZZLE_OVER);
+            }
+         }
+         
+         private function onRollOutItem(event:Event):void{
+            var item:NavBarItem = event.currentTarget as NavBarItem;
+            item.rollOverStyle=false;
+            if ((item.index==0)&&(model.iconActionOnFirstItem)){
+               simpleIcon.unhighlight();
+               drawRootAvatarBorder(false);
+               drawUserAvatarBorder(false);
+               coeditMask.source = AssetsManager.getEmbededAsset(NavBarAssets.TEAM_PUZZLE);
+            }
+         }
+         
+         private function onRollOverIcons():void{
+            log("onRollOverIcons()");
+            var item:NavBarItem = itemsContainer.getChildAt(0) as NavBarItem;
+            if (item && model.iconActionOnFirstItem){
+               item.filters = getNavBarTextFilters(FILTERS_NOT_OVER);
+               simpleIcon.highlight();
+               drawRootAvatarBorder(true);
+               drawUserAvatarBorder(true);
+               coeditMask.source = AssetsManager.getEmbededAsset(NavBarAssets.TEAM_PUZZLE_OVER);
+            }
+         }
+         
+         private function onRollOutIcons():void{
+            var item:NavBarItem = itemsContainer.getChildAt(0) as NavBarItem;
+            if (item && model.iconActionOnFirstItem){
+               item.filters = getNavBarTextFilters(FILTERS_NOT_OVER);
+               simpleIcon.unhighlight();
+               drawRootAvatarBorder(false);
+               drawUserAvatarBorder(false);
+               coeditMask.source = AssetsManager.getEmbededAsset(NavBarAssets.TEAM_PUZZLE);
+            }
+         }
+         
+         public function getAddPearlWindowsDockPosition():Rectangle {
+            if(!pearlAddImage || !pearlAddImage.initialized) return null;
+            var point:Point = pearlAddImage.localToGlobal(new Point(0, 0));
+            var posX:Number = point.x + (pearlAddImage.width / 2.0) + 2;
+            var posY:Number = point.y + (pearlAddImage.height) - 5;
+            var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+            
+            return position;
+         }
+
+         public function enableAddPearlButton():void {
+            pearlAddContainer.alpha = 1;
+         }
+
+         public function isPointOverNavBarLeftButtons(point:Point):Boolean {
+            var buttonsRightLimit:Point = mostConnectedControl.localToGlobal(new Point(mostConnectedControl.width, mostConnectedControl.height));
+            if (point.x < buttonsRightLimit.x + 15) {
+               return hitTestPoint(20, point.y);
+            }
+            return false;
+         }
+         
+         public function layoutEmptyMessageOnDiscover(toShow:Boolean):void {
+            emptyMessage.move(mostConnectedControl.localToGlobal(new Point(0,0)).x - 7, EMPTY_MESSAGE_TOP);
+            emptyMessage.visible = emptyMessage.includeInLayout = toShow;
+            var navModel:INavigationManager = ApplicationManager.getInstance().visualModel.navigationModel;
+            if (toShow) {
+               navModel.addEventListener(NavigationEvent.NAVIGATION_EVENT, onNavigation);
+            } else {
+               navModel.removeEventListener(NavigationEvent.NAVIGATION_EVENT, onNavigation);
+            }
+         }
+         
+         private function onNavigation(event:Event):void {
+            layoutEmptyMessageOnDiscover(false);   
+         }
+         
+         override public function set visible(value:Boolean):void {
+            super.visible = value;
+         }
+         
+      ]]>
+   </mx:Script>
+   
+</mx:Canvas>

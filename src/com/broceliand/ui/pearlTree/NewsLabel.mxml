@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PearlComponentAddOn xmlns="com.broceliand.ui.pearlTree.*"
+                     xmlns:mx="http://www.adobe.com/2006/mxml"
+                     creationComplete="onCreationComplete()"
+                     xmlns:button="com.broceliand.ui.button.*"
+                     >
+   <mx:Label id="newsLabel" 
+             fontWeight="bold"
+             fontSize="12"
+             height="{NEWS_BUTTON_HEIGHT}"
+             color="#FFFFFF" letterSpacing="1"
+             text="{BroLocale.getInstance().getText('pearl.newsbutton')}"/>
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.graphLayout.visual.PTVisualNodeBase;
+         import com.broceliand.ui.interactors.InteractorManager;
+         import com.broceliand.ui.pearl.IUIPearl;
+         import com.broceliand.ui.renderers.pageRenderers.PearlRendererBase;
+         import com.broceliand.ui.renderers.pageRenderers.pearl.PearlBase;
+         import com.broceliand.ui.util.ColorPalette;
+         import com.broceliand.util.BroLocale;
+         
+         private var _labelValue:String="news";
+         private var _pearl:IUIPearl;
+         private var _clicked:Boolean = false;
+         
+         public static const NEWS_BUTTON_HEIGHT:int = 20;
+         public static const NEWS_BUTTON_X_OFFSET:int = 5;
+         public static const NEWS_BUTTON_Y_OFFSET:int = -10;
+         
+         private function onCreationComplete():void {
+            setFilterColor(0);
+         }
+         
+         public function setFilterColor(color:int):void {
+            var filters:Array = newsLabel.filters;
+            if (filters.length>0 && filters[0] is DropShadowFilter) {
+               var  d:DropShadowFilter =filters[0] as DropShadowFilter;
+               d.color = color;
+            } else {
+               filters = getNewLabelFilters(color, scaleX);
+            }
+            newsLabel.filters =  filters;
+         }
+         
+         public function set pearl(pearl:IUIPearl):void {
+            if (_pearl != pearl) {
+               _clicked = false;
+            }
+            _pearl = pearl;
+         }
+         
+         override protected function commitProperties():void {
+            super.commitProperties();
+         }
+         
+         override protected function updateTargetComponentPosition(point:Point):void{
+            if (_bindedComponent) {
+               var pearl:PearlBase = (_bindedComponent as PearlRendererBase).pearl;
+               if (pearl) {
+                  var center:Point = pearl.pearlCenter;
+                  point.x = _bindedComponent.x + scaleX * (center.x + NEWS_BUTTON_X_OFFSET);
+                  point.y = _bindedComponent.y + scaleY * (center.y + NEWS_BUTTON_Y_OFFSET);
+               }
+            }
+         }
+
+         public static function getNewLabelFilters(color:int, scaleX:Number = 1.0):Array {
+            var angle:Number = 0;
+            var alpha:Number = 1;
+            var blurX:Number = 2 * scaleX;
+            var blurY:Number = 2 * scaleX;
+            var distance:Number = 0;
+            var strength:Number = 20;
+            var inner:Boolean = false;
+            var knockout:Boolean = false;
+            var quality:Number = BitmapFilterQuality.MEDIUM;
+            var filter:DropShadowFilter = new DropShadowFilter(distance,angle,color,alpha,blurX,blurY,strength,quality,inner,knockout);
+            return new Array(filter);
+         }
+
+         override public function end():void {
+            super.end();
+            if (newsLabel) {
+               setFilterColor(0);  
+            }
+            ApplicationManager.getInstance().components.pearlTreeViewer.vgraph.controls.releaseNewsButton(this);
+         }
+         override public function reposition():void {
+            if (node &&  node.vnode && PTVisualNodeBase(node.vnode).isMoving) {
+               alpha = 0;
+               return;
+            } else {
+               if (_bindedComponent) {
+                  alpha = _bindedComponent.alpha;
+               } else {
+                  alpha = 1;
+               }
+               super.reposition();
+            }
+            
+         }
+         override public function set scaleX(value:Number):void {
+            if (scaleX != value) {
+               super.scaleX  = value;
+               updateFilter();
+            }   
+         }
+         private function updateFilter():void {
+            var filters:Array = newsLabel.filters;
+            if (filters.length>0 && filters[0] is DropShadowFilter) {
+               var  d:DropShadowFilter =filters[0] as DropShadowFilter;
+               d.blurX = 2 * scaleX;
+               d.blurY = 2 * scaleX;
+               newsLabel.filters =  filters;
+            }
+            
+         }
+         
+      ]]>
+   </mx:Script>
+</PearlComponentAddOn>

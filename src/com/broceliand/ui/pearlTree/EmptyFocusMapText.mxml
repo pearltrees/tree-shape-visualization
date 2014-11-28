@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PearlComponentAddOn xmlns="com.broceliand.ui.pearlTree.*" height="100" width="120" xmlns:mx="http://www.adobe.com/2006/mxml"
+                     horizontalScrollPolicy="off" x="900" y ="212" xmlns:text="flash.text.*" verticalScrollPolicy="off"
+                     creationComplete="onCreationComplete()" clipContent="false">
+   
+   <mx:Text id="emptyFocusTreeText" selectable="false" color="#000000" visible="false" textAlign="left"  width="100" height="60%"  htmlText="{BroLocale.getInstance().getText('pearl.emptyFocusTree')}"/>
+   <mx:Text id="emptyFocusUserTreeText" selectable="false" color="#000000" visible="true" textAlign="left"  width="100" height="60%"  htmlText="{BroLocale.getInstance().getText('pearl.emptyFocusUserTree')}" click="onClickAddPearls()" mouseOver="onMouseOver()" mouseOut="onMouseOut()"/>
+   <mx:Text id="privateFocusTreeText"  selectable="false" color="#000000" visible="true" textAlign="center"  width="80" height="100%"  htmlText="{BroLocale.getInstance().getText('pearl.privateFocusTree')}"/>
+   <mx:Text id="userRootTreeText" selectable="false" color="#000000" visible="false" textAlign="left" width="100" height="60%" htmlText="{BroLocale.getInstance().getText('pearl.emptyUserTree')}" click="onClickAddPearls()" mouseOver="onMouseOver()" mouseOut="onMouseOut()"/>
+
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.graphLayout.controller.GraphicalAnimationRequestProcessor;
+         import com.broceliand.graphLayout.model.IPTNode;
+         import com.broceliand.graphLayout.visual.IPTVisualNode;
+         import com.broceliand.pearlTree.model.BroPTRootNode;
+         import com.broceliand.pearlTree.model.BroPearlTree;
+         import com.broceliand.pearlTree.model.User;
+         import com.broceliand.pearlTree.navigation.INavigationManager;
+         import com.broceliand.pearlTree.navigation.NavigationEvent;
+         import com.broceliand.ui.controller.IWindowController;
+         import com.broceliand.ui.renderers.pageRenderers.PearlRendererBase;
+         import com.broceliand.ui.window.WindowController;
+         import com.broceliand.util.BroLocale;
+         import flash.filters.BitmapFilterQuality;
+         import flash.filters.DropShadowFilter;
+         import flash.filters.GlowFilter;
+         import com.broceliand.ui.util.ColorPalette;
+
+         import mx.core.IUIComponent;
+         import mx.core.UIComponent;
+         
+         private var textFilters:Array = getTextFilters();
+         public static const TEXT_ROLLOVER_COLOR : uint = 0x009EE0;
+         public static const TEXT_ROLLOUT_COLOR : uint = 0x000000;
+
+         private var _showUserAccount:Boolean =false;
+         private var _focusTree:BroPearlTree;
+         private var _isShowing:Boolean  = false;
+         private var _isNewFocus:Boolean = false;
+         private var windowController:IWindowController;
+         
+         private function onCreationComplete():void {
+            if (BroLocale.languageIsFrench()) {
+               emptyFocusUserTreeText.setStyle("leading", 0);
+               privateFocusTreeText.setStyle("leading", -8);
+               userRootTreeText.setStyle("leading", 0);
+               emptyFocusTreeText.setStyle("leading", -6);
+               emptyFocusTreeText.y = -2;
+            }
+            else {
+               emptyFocusUserTreeText.setStyle("leading", -11);
+               privateFocusTreeText.setStyle("leading", 0);
+               userRootTreeText.setStyle("leading", -11);
+               emptyFocusUserTreeText.y = -14;
+               userRootTreeText.y = -14;
+            }
+            emptyFocusUserTreeText.filters = textFilters;
+            privateFocusTreeText.filters = textFilters;
+            userRootTreeText.filters = textFilters;
+         }
+         
+         override protected function createChildren():void {
+            super.createChildren();
+            ApplicationManager.getInstance().visualModel.navigationModel.addEventListener(NavigationEvent.NAVIGATION_EVENT, onNavigate);
+         }
+         
+         private function showUserAccount(isUserAccount:Boolean):void {
+            if (_showUserAccount!= isUserAccount) {
+               _showUserAccount = isUserAccount;
+               emptyFocusUserTreeText.visible = privateFocusTreeText.visible = !_showUserAccount;
+               userRootTreeText.visible = _showUserAccount;
+            }
+         }
+         override public function bindToNode(node:IPTNode, uiComponent:UIComponent=null):void {
+            super.bindToNode(node);
+            if (node && (node.getBusinessNode() as BroPTRootNode).isAssociationHierarchyRoot()) {
+               if (node.getBusinessNode().owner.isCurrentUserAuthor() && node.getBusinessNode().owner.isUserRoot()) {
+                  showUserAccount(true);
+                  return;
+               } 
+            }
+            showUserAccount(false);
+         }   
+         private function onNavigate(event:NavigationEvent):void {
+            _isNewFocus = event.isNewFocus;
+            if (event.isNewFocus && !event.isShowingPTW) {
+               watchFocusTree(event.newFocusTree);
+            } else if (event.isShowingPTW) {
+               watchFocusTree(null);
+            }
+         }
+         private function watchFocusTree(tree:BroPearlTree):void {
+            if (_focusTree) {
+               _focusTree.removeEventListener(BroPearlTree.TREE_STRUCTURE_CHANGED, onTreeChanges);
+            }
+            _focusTree = tree;
+            if (_focusTree){ 
+               _focusTree.addEventListener(BroPearlTree.TREE_STRUCTURE_CHANGED, onTreeChanges);
+            }
+            onTreeChanges(null);
+         } 
+         private function onTreeChanges(event:Event):void {
+            if (_focusTree) {
+               showEmptyTree(_focusTree.isEmpty());
+            } else {
+               showEmptyTree(false);
+            } 
+         }
+         private function showEmptyTree(isShowed:Boolean):void {
+            if (isShowed != _isShowing) {
+               _isShowing = isShowed;
+               if (_isShowing) {
+                  var requestProcessor:GraphicalAnimationRequestProcessor = ApplicationManager.getInstance().visualModel.animationRequestProcessor;
+                  
+                  if (requestProcessor.isBusy || _isNewFocus) {
+                     requestProcessor.addEventListener(GraphicalAnimationRequestProcessor.END_PROCESSING_ACTION_EVENT, bindToRootAndMakeVisibleAtAnimationEnd);
+                  } else {
+                     bindToRootAndMakeVisibleAtAnimationEnd(null);
+                  }
+               } else {
+                  bindToNode(null);
+                  visible = false;
+               }
+            }
+         }
+         
+         private function bindToRootAndMakeVisibleAtAnimationEnd(event:Event):void {
+            var navModel:INavigationManager= ApplicationManager.getInstance().visualModel.navigationModel;
+            if (navModel.getFocusedTree() && navModel.getFocusedTree().isEmpty() && !navModel.isShowingPearlTreesWorld()) { 
+               var requestProcessor:GraphicalAnimationRequestProcessor = ApplicationManager.getInstance().visualModel.animationRequestProcessor;
+               requestProcessor.removeEventListener(GraphicalAnimationRequestProcessor.END_PROCESSING_ACTION_EVENT, bindToRootAndMakeVisibleAtAnimationEnd);
+               bindToNode(ApplicationManager.getInstance().components.pearlTreeViewer.vgraph.currentRootVNode.node as IPTNode);
+               visible = true;
+               if (!_showUserAccount) {
+                  if (navModel.getFocusedTree().isPrivate() && !navModel.getFocusedTree().isCurrentUserAuthor()) {
+                     emptyFocusTreeText.visible = emptyFocusTreeText.includeInLayout = false; 
+                     emptyFocusUserTreeText.visible = emptyFocusUserTreeText.includeInLayout = false;
+                     privateFocusTreeText.visible = privateFocusTreeText.includeInLayout = true;
+                  } 
+                  else if (!navModel.getFocusedTree().isCurrentUserAuthor()){
+                     emptyFocusTreeText.visible = emptyFocusTreeText.includeInLayout = true;
+                     emptyFocusUserTreeText.visible = emptyFocusUserTreeText.includeInLayout = false;
+                     privateFocusTreeText.visible = privateFocusTreeText.includeInLayout = false;
+                  }
+                  else{
+                     emptyFocusTreeText.visible = emptyFocusTreeText.includeInLayout = false;
+                     emptyFocusUserTreeText.visible = emptyFocusUserTreeText.includeInLayout = true;
+                     privateFocusTreeText.visible = privateFocusTreeText.includeInLayout = false;
+                  }
+               }
+               invalidateDisplayList();
+            }
+            
+         }
+         
+         override protected function updateTargetComponentPosition(point:Point):void{
+            scaleX = _bindedComponent.scaleX;
+            scaleY = _bindedComponent.scaleY;
+            point.x = Math.floor(_bindedComponent.x) + 64  * _bindedComponent.scaleX;            
+            if (BroLocale.languageIsFrench()) {
+               point.y = Math.floor(_bindedComponent.y + 3 * _bindedComponent.scaleY );
+            }
+            else {
+               point.y = Math.floor(_bindedComponent.y + 1 * _bindedComponent.scaleY);
+            }
+         }
+         
+         private function onClickAddPearls():void{
+            if (!windowController){
+               var am:ApplicationManager = ApplicationManager.getInstance();
+               windowController = am.components.windowController;
+            }               
+            windowController.openAddPearlsCoverWindow();
+         }
+         
+         private function onMouseOver():void{
+            emptyFocusUserTreeText.setStyle("color",TEXT_ROLLOVER_COLOR);
+            userRootTreeText.setStyle("color",TEXT_ROLLOVER_COLOR);
+         }
+         private function onMouseOut():void{
+            emptyFocusUserTreeText.setStyle("color",TEXT_ROLLOUT_COLOR);
+            userRootTreeText.setStyle("color",TEXT_ROLLOUT_COLOR)
+         }
+         
+         public static function getTextFilters():Array{
+            var color:Number = ColorPalette.getInstance().backgroundColor;
+            var alpha:Number = 1;
+            var blurX:Number = 2;
+            var blurY:Number = 2;
+            var strength:Number = 10;
+            var inner:Boolean = false;
+            var knockout:Boolean = false;
+            var quality:Number = BitmapFilterQuality.LOW;
+            var filter:GlowFilter = new GlowFilter(color, alpha, blurX,blurY,strength,quality,inner, knockout);
+            var ret:Array = new Array();
+            ret.push(filter);
+            var dropShadowFilter:DropShadowFilter = new DropShadowFilter(1, 90, color, 1, 0, 0, 250, BitmapFilterQuality.LOW);
+            ret.push(dropShadowFilter);
+            return ret;
+         }
+         
+      ]]>
+   </mx:Script>
+</PearlComponentAddOn >

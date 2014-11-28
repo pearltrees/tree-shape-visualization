@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
+                xmlns:panel="com.broceliand.ui.panel.*"
+                layout="absolute"
+                preinitialize="onPreInitialize()"
+                usePreloader="false"
+                historyManagementEnabled="false"
+                frameRate="24"
+                backgroundImage="" 
+                activate="onApplicationActivate(event)"
+                deactivate="onApplicationActivate(event)"
+                backgroundColor="#FFFFFF"
+                addedToStage="onAddedToStage()">
+   
+   <mx:Style source="com/broceliand/ui/style.css" />
+   
+   <mx:Metadata> 
+      [ResourceBundle('message')]
+   </mx:Metadata>  
+   
+   <panel:TopPanel id="topPanel"
+                   creationPolicy="none" 
+                   creationComplete="onTopPanelCreationComplete()" />
+   
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.ui.PTStyleManager;
+         import com.broceliand.ui.controller.startPolicy.PearlTreeStartPolicy;
+         import com.broceliand.ui.controller.startPolicy.StartPolicyLogger;
+         import com.broceliand.ui.tooltip.PTGenericTooltip;
+         import com.broceliand.ui.util.ColorPalette;
+         import com.broceliand.ui.util.Profiler;
+         import com.broceliand.util.Alert;
+         import com.broceliand.util.PTFocusManager;
+         import com.broceliand.util.UrlNavigationController;
+         import com.broceliand.util.logging.LoggingParameters;
+         
+         import flash.system.Security;
+         
+         import mx.managers.ToolTipManager;
+
+         private var _isInitialized:Boolean;
+         private var _focusOnInitialize:Boolean;
+         private var _pearltreeStartPolicy:PearlTreeStartPolicy;
+         private var _endLoadingTime:Number;
+         
+         private function onPreInitialize():void {
+            
+            LoggingParameters.init(); 
+            StartPolicyLogger.getInstance().setFlexApplicationLoaded();
+            _endLoadingTime = new Date().getTime();
+
+            focusManager = new PTFocusManager(this);
+
+         }
+         
+         private function preloadBackgroundAsap():void {
+            
+            var initialBhFromUrl:String = UrlNavigationController.getBackgroundHashFromUrl();
+            if (initialBhFromUrl) {
+               var url:String = ApplicationManager.getInstance().backgroundManager.getBackgroundUrlFromHash(initialBhFromUrl);
+               ApplicationManager.getInstance().remoteResourceManagers.remoteImageManager.getRemoteResource(null, url, true);
+            }
+         }
+         
+         private function onAddedToStage():void {
+            init();
+         }
+         
+         private function init():void {
+            Profiler.getInstance().addMarker("Application added to stage", StartPolicyLogger.PROFILER_SESSION_NAME);
+
+            var am:ApplicationManager = ApplicationManager.getInstance(true);
+            preloadBackgroundAsap();
+            
+            if(!am.isEmbed()) {
+               
+               am.isApplicationFocused = _focusOnInitialize;
+            }
+            Profiler.getInstance().addMarker("ApplicationManager created", StartPolicyLogger.PROFILER_SESSION_NAME);
+
+            if(am.isEmbed()) {
+               Security.allowDomain("*");
+               
+               am.getExternalInterface().addEmbedJS();
+            }
+
+            ToolTipManager.toolTipClass = PTGenericTooltip;
+            ToolTipManager.showDelay = PTGenericTooltip.TOOLTIP_SHOW_DELAY;
+            am.enableTooltip = false;
+
+            am.styleManager.applyDefaultStyles();
+            setStyle('color', ColorPalette.getInstance().pearltreesColor);
+            setStyle('backgroundColor', ColorPalette.getInstance().backgroundColor);
+            Profiler.getInstance().addMarker("Styles applied", StartPolicyLogger.PROFILER_SESSION_NAME);            
+
+            if(!topPanel.initialized) {
+               topPanel.createComponentsFromDescriptors();
+               am.components.topPanel = topPanel; 
+            }
+            Profiler.getInstance().addMarker("TopPanel created", StartPolicyLogger.PROFILER_SESSION_NAME);
+
+            _pearltreeStartPolicy = new PearlTreeStartPolicy();
+            _pearltreeStartPolicy.run();
+            Profiler.getInstance().addMarker("Start policy started", StartPolicyLogger.PROFILER_SESSION_NAME);
+            
+            _isInitialized = true;
+         }
+         
+         private function onApplicationActivate(event:Event):void {            
+            if(_isInitialized) {
+               ApplicationManager.getInstance().isApplicationFocused = (event.type == Event.ACTIVATE);
+            }else{
+               _focusOnInitialize = (event.type == Event.ACTIVATE);
+            }
+         }
+         
+         private function onTopPanelCreationComplete():void {
+            _pearltreeStartPolicy.topPanel = topPanel;
+         }
+
+         private static var defaultStyleConstructed:Boolean = constructDefaultStyle();
+         public static function constructDefaultStyle(applyNow:Boolean=true):Boolean {
+            var styleManager:PTStyleManager = PTStyleManager.getInstance();         
+            if (!styleManager.hasStyleDeclaration("Main")) {
+
+               var defaultStyles:CSSStyleDeclaration = new CSSStyleDeclaration();
+               defaultStyles.defaultFactory = function():void {
+                  this.fontFamily = "PTArial";
+                  this.fontSize = 11;
+               }
+               styleManager.addStyleDeclaration("Main", defaultStyles, applyNow);
+            }
+            return true;
+         }
+
+      ]]>
+   </mx:Script>
+   
+</mx:Application>

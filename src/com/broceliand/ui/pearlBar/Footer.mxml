@@ -1,0 +1,900 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas implements="com.broceliand.ui.pearlBar.IFooter"
+           width="100%"
+           xmlns:mx="http://www.adobe.com/2006/mxml"
+           xmlns:pearlBar="com.broceliand.ui.pearlBar.*"
+           xmlns:view="com.broceliand.ui.pearlBar.view.*"
+           xmlns:player="com.broceliand.player.*"
+           xmlns:pearlDeck="com.broceliand.ui.pearlDeck.*"
+           xmlns:panel="com.broceliand.ui.panel.*"
+           xmlns:resources="com.broceliand.util.resources.*"
+           xmlns:notificationIcon="com.broceliand.ui.pearlBar.notificationIcon.*"
+           xmlns:dropZone="com.broceliand.ui.pearlBar.dropZone.*"
+           horizontalScrollPolicy="off"
+           verticalScrollPolicy="off"
+           initialize="onInitialize()"
+           creationComplete="onCreationComplete()"
+           visible="false"
+           height="{DECK_HEIGHT}"
+           bottom="0">
+   <mx:Image id="deck"
+             source="{PearlDeckAssets.DECK}"
+             width="100%"
+             maintainAspectRatio="false"
+             bottom="0"/>
+   <mx:HBox id="decksContainer" horizontalGap="0" backgroundAlpha="0"
+            verticalAlign="bottom" bottom="6"
+            width="100%"
+            height="100%">
+      <mx:Spacer id="beforePWSpacer" 
+                 width="25"/>
+      
+      <mx:HBox horizontalGap="0" paddingBottom="5" height="100%" verticalAlign="bottom">
+         <!-- Premium box -->
+         <mx:VBox id="premiumBox"
+                  horizontalAlign="center"
+                  verticalGap="-9"
+                  click="onClickPremium(event)"
+                  rollOver="onRollOverPremiumBox()"
+                  rollOut="onRollOutPremiumBox()"
+                  width="75">
+            <mx:Image id="premiumImage"
+                      source="{AssetsManager.getEmbededAsset(PearlDeckAssets.PREMIUM)}"/>
+            <mx:Text id="premiumText"
+                     textAlign="center" color="{COLOR_TEXT}"
+                     styleName="activeText"
+                     selectable="false"
+                     filters="{getTextFilters(NavBar.FILTERS_NOT_OVER)}" />
+         </mx:VBox>
+         <!-- Pearl Window -->
+         <mx:VBox id="pearlWindowContainer"
+                  horizontalAlign="center"
+                  verticalGap="-9"
+                  click="onClickPearlWindow(event)"
+                  rollOver="onRollOverPearlWindowContainer()"
+                  rollOut="onRollOutPearlWindowContainer()"
+                  width="{WIDTH}">
+            <mx:Image id="pearlWindowImage"
+                      source="{AssetsManager.getEmbededAsset(PearlDeckAssets.SHOW_DETAIL)}"/>
+            <mx:Text id="pearlWindowText"
+                     textAlign="center"
+                     paddingBottom="0"
+                     paddingTop="0" color="{COLOR_TEXT}"
+                     htmlText="{BroLocale.getInstance().getText('pearldeck.pearlWindow.docked')}"
+                     styleName="activeText"
+                     selectable="false"
+                     filters="{getTextFilters(NavBar.FILTERS_NOT_OVER)}" />
+         </mx:VBox>
+         
+         <mx:Spacer id="PWspacer"
+                    width="0"
+                    includeInLayout="false"/>
+         
+         <!-- Install Pearler / extensions -->
+         <mx:VBox id="pearlerContainer"
+                  horizontalAlign="center"
+                  verticalGap="-9"
+                  click="onClickPearler(event)"
+                  rollOver="onRollOverPearlerContainer()"
+                  rollOut="onRollOutPearlerContainer()"
+                  width="{WIDTH}">
+            <mx:Image id="pearlerImage"
+                      source="{AssetsManager.getEmbededAsset(PearlDeckAssets.PEARLER)}" />
+            <mx:Text id="pearlerText"
+                     textAlign="center"
+                     htmlText="{BroLocale.getInstance().getText('pearldeck.pearler')}"
+                     styleName="activeText"
+                     selectable="false" color="{COLOR_TEXT}"
+                     filters="{getTextFilters(NavBar.FILTERS_NOT_OVER)}" />
+         </mx:VBox>
+         
+         <mx:Spacer id="pearlerSpacer"
+                    width="0"/>
+         
+         <!-- Social sync -->
+         <mx:VBox id="socialSyncContainer"
+                  horizontalAlign="center"
+                  verticalGap="-9"
+                  click="onClickSocialSync(event)"
+                  rollOver="onRollOverSocialSyncContainer()"
+                  rollOut="onRollOutSocialSyncContainer()"
+                  width="{WIDTH}">
+            <mx:Image id="socialSyncImage"
+                      source="{AssetsManager.getEmbededAsset(PearlDeckAssets.SOCIAL_SYNC)}" />
+            <mx:Text id="socialSyncText"
+                     textAlign="center" color="{COLOR_TEXT}"
+                     htmlText="{BroLocale.getInstance().getText('pearldeck.socialSync')}"
+                     styleName="activeText" selectable="false"
+                     filters="{getTextFilters(NavBar.FILTERS_NOT_OVER)}" />
+         </mx:VBox>
+         
+         <mx:Spacer id="socialSyncSpacer"
+                    width="0" />
+         
+         <!-- Invite a friend -->
+         <mx:VBox id="findFriendsContainer"
+                  horizontalAlign="center"
+                  verticalGap="-9"
+                  click="onClickInviteFriend(event)"
+                  rollOver="onRollOverInviteFriendContainer()"
+                  rollOut="onRollOutInviteFriendContainer()"
+                  width="{WIDTH}">
+            <mx:Image id="findFriendsImage"
+                      source="{AssetsManager.getEmbededAsset(PearlDeckAssets.INVITE_FRIEND)}" />
+            <mx:Text id="findFriendText"
+                     textAlign="center" color="{COLOR_TEXT}"
+                     htmlText="{BroLocale.getInstance().getText('pearldeck.findFriend')}"
+                     styleName="activeText" selectable="false"
+                     filters="{getTextFilters(NavBar.FILTERS_NOT_OVER)}" />
+         </mx:VBox>
+         <mx:Spacer id="findFriendsSpacer"
+                    width="0" />
+         
+         <!-- Import -->
+         <mx:VBox id="importContainer"
+                  horizontalAlign="center"
+                  verticalGap="-9" 
+                  click="onClickImport(event)"
+                  rollOver="onRollOverImportContainer()"
+                  rollOut="onRollOutImportContainer()"
+                  width="{WIDTH}">
+            <mx:Image id="importImage"
+                      source="{AssetsManager.getEmbededAsset(PearlDeckAssets.IMPORT)}" />
+            <mx:Text id="importText"
+                     textAlign="center"
+                     htmlText="{BroLocale.getInstance().getText('pearldeck.import')}"
+                     styleName="activeText"
+                     selectable="false" color="{COLOR_TEXT}"
+                     filters="{getTextFilters(NavBar.FILTERS_NOT_OVER)}" />
+         </mx:VBox>
+         
+         <mx:Spacer id="firstPartSpacer"
+                    width="0" />
+      </mx:HBox>
+      <mx:HBox id="dropZoneDeckContainer"
+               horizontalGap="0"
+               width="100%"
+               height="100%"
+               verticalAlign="bottom" paddingBottom="8">
+         <!--<mx:Spacer id="beforeDropzoneSymbol"
+         width="22" 
+         visible="false" includeInLayout="false"/>
+         <mx:Image id="dropzoneSymbol" 
+         source="{AssetsManager.getEmbededAsset(PearlDeckAssets.DROP_ZONE_SYMBOL)}"
+         visible="false" includeInLayout="false"
+         width="53" height="36"/>-->
+         <dropZone:DropZoneDeck id="dropZoneDeck"
+                                width="100%"
+                                minWidth="110"/>
+      </mx:HBox>
+      <mx:Spacer id="dropzoneSpacer"
+                 width="5" />
+      
+      <!-- Trash box -->
+      <mx:HBox id="rightPartContainer" verticalAlign="bottom" paddingBottom="5">
+         <!--<mx:VBox id="zoomBox">
+         <view:ZoomScale id="zoomControl"/>
+         <mx:Text id="zoomBoxText"
+         textAlign="center" color="{COLOR_TEXT}"
+         htmlText="{BroLocale.getInstance().getText('pearldeck.zoom')}"
+         styleName="activeText"
+         selectable="false"
+         filters="{getTextFilters()}" />
+         </mx:VBox>-->
+         <mx:Spacer width="90" id="roomForZoomScale"/>
+         <mx:VBox id="trashBox" 
+                  horizontalAlign="center"
+                  verticalGap="-1"
+                  click="onClickTrash(event)"
+                  rollOver="onRollOverTrash(event)"
+                  rollOut="onRollOutTrash()"
+                  width="{WIDTH}" height="100%">
+            <mx:Image id="trashBoxImage"
+                      source="{AssetsManager.getEmbededAsset(TrashAssets.TRASH)}"/>
+            <mx:Text id="trashBoxText"
+                     textAlign="center" color="{COLOR_TEXT}"
+                     htmlText="{BroLocale.getInstance().getText('pearldeck.trash')}"
+                     styleName="activeText"
+                     selectable="false"
+                     filters="{getTextFilters(NavBar.FILTERS_NOT_OVER)}" />
+         </mx:VBox>
+         <mx:Spacer id="trashSpacer"
+                    width="10" />
+      </mx:HBox>
+   </mx:HBox>
+   
+   <mx:Style>
+      .activeText{
+         font-size: 11;
+         leading: -1;
+         disabled-color: #D6D6D6;
+      }
+      .disabledText{
+         color: #666666;
+         font-size: 11;
+         leading: 0;
+      }
+   </mx:Style>
+   <mx:Script><![CDATA[
+      import com.broceliand.ApplicationManager;
+      import com.broceliand.ApplicationMessageBroadcaster;
+      import com.broceliand.assets.InfoPanelAssets;
+      import com.broceliand.assets.PearlDeckAssets;
+      import com.broceliand.assets.TrashAssets;
+      import com.broceliand.pearlTree.io.exporter.UserExporter;
+      import com.broceliand.pearlTree.io.loader.AccountManager;
+      import com.broceliand.pearlTree.io.loader.SessionHelper;
+      import com.broceliand.pearlTree.io.loader.UserLoader;
+      import com.broceliand.pearlTree.model.BroPearlTree;
+      import com.broceliand.pearlTree.model.CurrentUser;
+      import com.broceliand.pearlTree.model.User;
+      import com.broceliand.pearlTree.navigation.INavigationManager;
+      import com.broceliand.pearlTree.navigation.NavigationEvent;
+      import com.broceliand.ui.bigActionWindow.BigActionWindowHelper;
+      import com.broceliand.ui.controller.IWindowController;
+      import com.broceliand.ui.controller.PearlbarInfo;
+      import com.broceliand.ui.controller.startPolicy.StartPolicyLogger;
+      import com.broceliand.ui.highlight.HighlightCommands;
+      import com.broceliand.ui.highlight.highlighters.HaloUIComponentHighlighter;
+      import com.broceliand.ui.model.ZoomModel;
+      import com.broceliand.ui.navBar.NavBar;
+      import com.broceliand.ui.panel.MainPanel;
+      import com.broceliand.ui.pearlBar.deck.IDeckModel;
+      import com.broceliand.ui.pearlBar.footerBanner.FooterBanner;
+      import com.broceliand.ui.pearlBar.footerBanner.FooterBannerModel;
+      import com.broceliand.ui.pearlBar.footerBanner.IFooterBanner;
+      import com.broceliand.ui.pearlTree.GraphControlLayer;
+      import com.broceliand.ui.pearlWindow.PremiumWindowHelper;
+      import com.broceliand.ui.renderers.TitleRenderer;
+      import com.broceliand.ui.util.AssetsManager;
+      import com.broceliand.ui.util.ColorPalette;
+      import com.broceliand.ui.util.SkinHelper;
+      import com.broceliand.ui.window.PTWindowModel;
+      import com.broceliand.ui.window.WindowController;
+      import com.broceliand.ui.window.ui.WindowEffectManagerEvent;
+      import com.broceliand.ui.window.ui.WindowSlowEffectManager;
+      import com.broceliand.ui.window.ui.infoWindow.InfoWindowModel;
+      import com.broceliand.util.BroLocale;
+      
+      import mx.events.FlexEvent;
+      
+      public static const FOOTER_SHOW:String = "footerAlphaShow";
+      public static const FOOTER_HIDE:String = "footerAlphaHide";
+      public static const COLOR_TEXT:uint = 0x505050;
+      public static const FONT_SIZE_LABEL:Number = 11.5;
+      
+      private const WIDTH:int = 67;
+      
+      private var _dropZoneHighlighter:HaloUIComponentHighlighter;
+      private var _trashHighlighter:HaloUIComponentHighlighter;
+      
+      private var isOverTrashBoxChanged:Boolean;
+      private var _isPearlDraggedOverTrashBox:Boolean = false;
+      private var _isTrashBoxRecovering:Boolean = false;
+      
+      private var _mouseIsDirectlyOver:Boolean;
+      
+      private var _isPearlerEnabled:Boolean;
+      private var _isSocialSyncEnabled:Boolean;
+      private var _isInviteEnabled:Boolean;
+      private var _isPremiumEnabled:Boolean;
+      private var _isTrashEnabled:Boolean;
+      private var _isDropZoneEnabled:Boolean;
+      private var _isOverPearlWindowContainer:Boolean;
+      private var _deckVisible:Boolean = true;
+      private var _isImportEnabled:Boolean;
+
+      private var _zoomModel:ZoomModel;
+      
+      private var _ignoreNewTreeAction:Boolean;
+      private var _isReadyToShow:Boolean;
+      private var _footerBanner:FooterBanner;
+      private var _isOverTrashBox:Boolean;
+      private var _hasPearlWindowAlreadyDockInAnonymous:Boolean = false;
+      
+      private static const DISABLED_ALPHA:Number = 0.35;
+      private static const IGNORE_NEW_TREE_ACTION_DELAY:Number = 2000;
+      public static const DECK_HEIGHT:Number = 80;
+
+      private function onInitialize():void {
+         
+         var am:ApplicationManager = ApplicationManager.getInstance();
+         
+         _trashHighlighter = new HaloUIComponentHighlighter(HighlightCommands.TRASH, new Array(trashBoxImage));
+         
+         new HaloUIComponentHighlighter(HighlightCommands.INSTALL_PEARLBAR, new Array(pearlerImage));
+         addEventListener(MouseEvent.ROLL_OVER, onRollOver);
+         addEventListener(MouseEvent.ROLL_OUT, onRollOut);
+         am.components.windowController.addEventListener(WindowController.VISIBLE_WINDOW_CHANGE, onVisibleWindowChange);
+         am.visualModel.applicationMessageBroadcaster.addEventListener(ApplicationMessageBroadcaster.WHITE_MARK_CHANGED_EVENT, onWhiteMarkChanges);
+         updateActionsAvailable();
+         
+      }
+      
+      public static function getTextFilters(over:uint):Array{
+         return null;
+         
+      }
+      
+      public function getDropZoneModel():IDeckModel {
+         return dropZoneDeck.deckModel;
+      }
+      
+      private function onClickTrash(event:MouseEvent):void {
+         if(_isTrashEnabled && !ApplicationManager.getInstance().currentUser.isAnonymous()) {
+            if (!_isPearlDraggedOverTrashBox){
+               var windowController:IWindowController = ApplicationManager.getInstance().components.windowController;
+               windowController.openDeletionRecoveryWindow();
+            }
+         }
+      }
+      
+      private function onClickInviteFriend(event:MouseEvent):void{
+         if(_isInviteEnabled) {
+            clearSelection();
+            ApplicationManager.getInstance().menuActions.showInviteWindow(true);
+            
+         }
+      }
+      
+      private function onClickSocialSync(event:MouseEvent):void{
+         if (_isSocialSyncEnabled) {
+            clearSelection();
+            var windowController:IWindowController = ApplicationManager.getInstance().components.windowController;
+            if(windowController.isSocialSyncWindowOpen()) {
+               windowController.closeSocialSyncWindow();
+            }else{
+               windowController.openSocialSyncWindow();
+               
+            }
+         }
+      }
+      
+      private function onClickImport(event:MouseEvent):void {
+         if (true) {
+            clearSelection();
+            var windowController:IWindowController = ApplicationManager.getInstance().components.windowController;
+            if(windowController.isImportWindowOpen()) {
+               windowController.closeImportWindow();
+            } else {
+               windowController.openImportWindow();
+               
+            }
+         }
+      }
+      
+      private function onClickPearlWindow(event:MouseEvent):void {
+         
+         var am:ApplicationManager = ApplicationManager.getInstance();
+         var windowController:IWindowController = am.components.windowController;
+         var isPearlWindowVisible:Boolean = (windowController.getNodeDisplayed() != null);
+         if(!isPearlWindowVisible) {
+            windowController.displayNodeInfo(null,false,true);
+         }else{
+            windowController.setPearlWindowDocked(true);
+         }
+         
+      }
+      
+      private function onClickPearler(event:MouseEvent):void {
+         if (!_isPearlerEnabled) return;
+         var windowController:IWindowController = ApplicationManager.getInstance().components.windowController;
+         if (windowController.isBigActionWindowOpen() && windowController.getBigActionWindowSkin() == BigActionWindowHelper.INSTALL_THE_PEARLER) {
+            windowController.closeBigActionWindow();
+         } else {
+            windowController.openBigActionWindow(BigActionWindowHelper.INSTALL_THE_PEARLER);
+            
+         }
+      }
+
+      private function onClickCustomizePremium(event:MouseEvent):void {
+         if (!_isPremiumEnabled) return;
+         PremiumWindowHelper.onClickOpenUpgradePremiumBackgroundWindow();
+      }
+      
+      private function onClickPremium(event:MouseEvent):void {
+         
+         PremiumWindowHelper.openPaymentPage(PremiumWindowHelper.PREMIUM_ORIGIN_DECK_BUTTON);
+         onRollOutPremiumBox();
+      }
+      
+      override public function set visible(value:Boolean):void {
+         super.visible = value;
+      }
+      
+      public function getPearlWindowDockPosition():Rectangle {
+         if(!pearlWindowImage || !pearlWindowImage.initialized) return null;
+         var point:Point = pearlWindowImage.localToGlobal(new Point(0, 0));
+         var rectX:Number = point.x + 3;
+         var rectY:Number = point.y + 10;
+         var rectWidth:Number = 30;
+         var rectHeight:Number = 30;
+         var position:Rectangle = new Rectangle(rectX, rectY, rectWidth, rectHeight);
+         return position;
+      }
+      
+      public function getImportWindowDockPosition():Rectangle {
+         if(!importImage || !importImage.initialized) return null;
+         var point:Point = importImage.localToGlobal(new Point(0, 0));
+         var rectX:Number = point.x +3;
+         var rectY:Number = point.y + 10;
+         var rectWidth:Number = 30;
+         var rectHeight:Number = 30;
+         var position:Rectangle = new Rectangle(rectX, rectY, rectWidth, rectHeight);
+         return position;
+      }
+      
+      public function getInstallPearlerWindowDockPosition():Rectangle {
+         if(!pearlerImage || !pearlerImage.initialized) return null;
+         var point:Point = pearlerImage.localToGlobal(new Point(0, 0));
+         var posX:Number = point.x + (pearlerImage.width / 2.0) + 2;
+         var posY:Number = point.y - 7;
+         var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+         return position;
+      }
+      
+      public function getSocialSyncWindowDockPosition():Rectangle {
+         if(!socialSyncImage || !socialSyncImage.initialized) return null;
+         var point:Point = socialSyncImage.localToGlobal(new Point(0, 0));
+         var posX:Number = point.x + (socialSyncImage.width / 2.0) + 2;
+         var posY:Number = point.y - 7;
+         var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+         return position;
+      }
+      
+      public function getInviteWindowDockPosition():Rectangle {
+         if(!findFriendsImage || !findFriendsImage.initialized) return null;
+         var point:Point = findFriendsImage.localToGlobal(new Point(0, 0));
+         var posX:Number = point.x + (findFriendsImage.width / 2.0) + 2;
+         var posY:Number = point.y - 7;
+         var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+         return position;
+      }
+      
+      public function getDeletionRecoveryWindowDockPosition():Rectangle {
+         if(!trashBoxImage || !trashBoxImage.initialized) return null;
+         var point:Point = trashBoxImage.localToGlobal(new Point(0, 0));
+         var posX:Number = point.x + (trashBoxImage.width / 2.0) + 2;
+         var posY:Number = point.y - 7;
+         var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+         return position;
+      }
+      
+      public function getPremiumWindowDockPosition():Rectangle {
+         if(!premiumImage || !premiumImage.initialized) return null;
+         var point:Point = premiumImage.localToGlobal(new Point(0, 0));
+         var posX:Number = point.x + (trashBoxImage.width / 2.0) + 2;
+         var posY:Number = point.y - 7;
+         var position:Rectangle = new Rectangle(posX, posY, 0, 0);
+         return position;
+      }
+
+      private function clearSelection():void{
+         ApplicationManager.getInstance().visualModel.selectionModel.selectNode(null,-1);
+      }
+      
+      private function updateActionsAvailable():void {
+         var am:ApplicationManager = ApplicationManager.getInstance();
+         var spl:StartPolicyLogger = StartPolicyLogger.getInstance();
+         var navigationModel:INavigationManager = am.visualModel.navigationModel;
+         var currentUser:CurrentUser = am.currentUser;
+         var isAnonymous:Boolean = currentUser.isAnonymous();
+         var isLoggedOnFacebook:Boolean = currentUser.isLoggedOnFacebook();
+
+         if (!processedDescriptors || !spl.isUserAuthenticated()) return;
+
+         if(!isAnonymous && !StartPolicyLogger.getInstance().isFirstTimeHomeOpened() && (!spl.isFirstNavigationEnded() || !spl.isDropzoneLoaded())) return;
+         displayBanner = isAnonymous;
+
+         visible = true;
+
+         dropZoneDeck.deckModel.isNavButtonVisible = !isAnonymous;
+         
+         if(!_isReadyToShow) {
+            _isReadyToShow = true;
+            callLater(updateActionsAvailable);
+            return;
+         }
+         
+         decksContainer.visible = decksContainer.includeInLayout = true;
+
+         if (!isAnonymous) {
+            if (navigationModel.isShowingPearlTreesWorld() && !navigationModel.isHomePage()) {
+               
+               _isPearlerEnabled = false;
+               _isDropZoneEnabled = false;
+               _isSocialSyncEnabled = false;
+               _isInviteEnabled = false;
+               _isPremiumEnabled = false;
+               _isTrashEnabled = false;
+               _isImportEnabled = false;
+            } else {
+               
+               _isPearlerEnabled = true;
+               _isDropZoneEnabled = true;
+               _isSocialSyncEnabled = true;
+               _isInviteEnabled = true;
+               _isPremiumEnabled = true;
+               _isTrashEnabled = true;
+               _isImportEnabled = true;
+            }
+            dropZoneDeck.width = NaN;
+            dropZoneDeck.percentWidth = 100;
+            
+            pearlerContainer.alpha = (_isPearlerEnabled)?1:DISABLED_ALPHA;
+            importContainer.alpha = (_isImportEnabled) ? 1:DISABLED_ALPHA;
+            socialSyncContainer.alpha = (_isSocialSyncEnabled)?1:DISABLED_ALPHA;
+            findFriendsContainer.alpha = (_isInviteEnabled)?1:DISABLED_ALPHA;
+            premiumBox.alpha = (_isPremiumEnabled)?1:DISABLED_ALPHA;
+            trashBox.alpha = (_isTrashEnabled)?1:DISABLED_ALPHA;
+            dropZoneDeck.deckModel.isEnabled = _isDropZoneEnabled;
+         }
+            
+         else{
+            
+            dropZoneDeck.width = NaN;
+            dropZoneDeck.percentWidth = 100;
+            
+            if(_footerBanner && _footerBanner.bannerModel.state == FooterBannerModel.STATE_DEFAULT) {
+               dropZoneDeck.deckModel.isTitleVisible = false;
+            }
+            
+            _isPearlerEnabled = true;
+            _isPremiumEnabled = true;
+            _isTrashEnabled = !navigationModel.isShowingPearlTreesWorld() || navigationModel.isHomePage();
+         }
+
+         importContainer.visible = importContainer.includeInLayout = !am.currentUser.isAnonymous();
+         pearlerContainer.visible = pearlerContainer.includeInLayout = pearlerSpacer.includeInLayout = !am.isEmbed() && !isAnonymous ;
+         premiumBox.visible = premiumBox.includeInLayout = firstPartSpacer.includeInLayout = !am.isEmbed() && !isAnonymous ;
+         socialSyncContainer.visible = socialSyncContainer.includeInLayout = socialSyncSpacer.includeInLayout = !isAnonymous;
+         findFriendsContainer.visible = findFriendsContainer.includeInLayout = findFriendsSpacer.includeInLayout =  !isAnonymous;
+
+         beforePWSpacer.includeInLayout = dropzoneSpacer.includeInLayout = !isAnonymous;
+         
+         trashBox.visible = trashBox.includeInLayout = trashSpacer.includeInLayout = !isAnonymous || !am.isWhiteMark();
+         if (!am.isEmbed()) {
+            zoomModel.setVisible(!isAnonymous || !am.isWhiteMark());
+         }
+         updatePearlerIcon();
+      }
+      
+      private function updatePearlerIcon():void {
+         var am:ApplicationManager = ApplicationManager.getInstance();
+         if (am.currentUser && am.currentUser.userSettings) {
+            onRollOutPearlerContainer();
+         }
+         else if (!am.currentUser.isAnonymous()) {
+            setTimeout(function():void {
+               var userLoader:UserLoader = new UserLoader();
+               userLoader.loadUserSettings();
+               userLoader.addEventListener(UserLoader.SETTINGS_LOADED_EVENT, onSettingsLoaded);
+               userLoader.addEventListener(UserLoader.SETTINGS_NOT_LOADED_EVENT, onSettingsLoaded);
+            }, 3000);
+         }
+      }
+      
+      private function onSettingsLoaded(event:Event):void {
+         var userLoader:UserLoader = (UserLoader)(event.target);
+         userLoader.removeEventListener(UserLoader.SETTINGS_LOADED_EVENT, onSettingsLoaded);
+         userLoader.removeEventListener(UserLoader.SETTINGS_NOT_LOADED_EVENT, onSettingsLoaded);
+         onRollOutPearlerContainer();
+      }
+      
+      private function onCreationComplete():void {
+         updateActionsAvailable();
+         var am:ApplicationManager = ApplicationManager.getInstance();
+         am.visualModel.navigationModel.addEventListener(NavigationEvent.NAVIGATION_EVENT, onNavigationChange);
+         am.visualModel.navigationModel.addEventListener(NavigationEvent.PLAY_EVENT, onNavigationChange);
+         am.components.windowController.addEventListener(WindowController.NODE_DISPLAYED_CHANGE, onNodeDisplayedChange);
+         am.components.windowController.addEventListener(WindowController.END_OF_PEARL_WINDOW_OPEN_EFFECT, onPearlWindowDockEffect);
+         am.components.windowController.addEventListener(WindowController.END_OF_PEARL_WINDOW_CLOSE_EFFECT, onPearlWindowDockEffect);
+         am.accountManager.addEventListener(AccountManager.USER_LOGGED_IN_EVENT, onUserLogin);
+         am.accountManager.addEventListener(UserExporter.ACCOUNT_CREATED_EVENT, onUserLogin);
+         if (am.currentUser.isAnonymous() || !am.components.windowController.isPearlWindowDocked()) hidePearlWindowContainer();
+         StartPolicyLogger.getInstance().addEventListener(StartPolicyLogger.NEXT_STEP_EVENT, onNextStepInStartPolicy);
+         if (am.currentUser.isPremium) {
+            premiumText.htmlText = BroLocale.getInstance().getText('pearldeck.upgradePremium');
+         } else {
+            premiumText.htmlText = BroLocale.getInstance().getText('pearldeck.goPremium');
+         }
+      }
+      
+      public function get footerBanner():IFooterBanner {
+         return _footerBanner as IFooterBanner;
+      }
+      
+      private function onPearlWindowDockEffect(event:Event):void {
+         if (event.type == WindowController.END_OF_PEARL_WINDOW_OPEN_EFFECT) {
+            pearlWindowContainer.visible = pearlWindowContainer.includeInLayout = false;
+            PWspacer.includeInLayout = false;
+         } else if (event.type == WindowController.END_OF_PEARL_WINDOW_CLOSE_EFFECT) {
+            if (!visible) {
+               visible = true;
+            }
+            pearlWindowContainer.visible = pearlWindowContainer.includeInLayout = true;
+            PWspacer.includeInLayout = true;
+         }
+         getDropZoneModel().refreshAtAnimationEnds();
+      }
+      
+      private function ignoreNewTreeActionDelay():void {
+         _ignoreNewTreeAction = false;
+      }
+      
+      private function onUserLogin(event:Event):void {
+         updateActionsAvailable();
+      }
+      private function onNavigationChange(event:NavigationEvent):void {
+         if(event.oldPlayState >= 0 && event.playState < 0) {
+            _ignoreNewTreeAction = true;
+            setTimeout(ignoreNewTreeActionDelay, IGNORE_NEW_TREE_ACTION_DELAY);
+         }
+         updateActionsAvailable();
+      }
+      
+      private function onNodeDisplayedChange(event:Event):void {
+         updateActionsAvailable();
+      }
+      
+      private function onNextStepInStartPolicy(event:Event):void {
+         updateActionsAvailable();
+      }
+      
+      private function onWhiteMarkChanges(event:Event):void {
+         updateActionsAvailable();
+      }
+      
+      private function onVisibleWindowChange(event:Event):void {
+         refreshPearlWindowContainer();
+      }
+      
+      private function onRollOver(event:MouseEvent):void{
+         _mouseIsDirectlyOver = true;
+      }
+      
+      private function onRollOut(event:MouseEvent):void{
+         _mouseIsDirectlyOver = false;
+      }
+      
+      override protected function commitProperties():void {
+         super.commitProperties();
+         
+         if(isOverTrashBoxChanged) {
+            if(_isOverTrashBox) {
+               if (ApplicationManager.getInstance().currentUser.isAnonymous()) {
+                  trashBoxImage.source = AssetsManager.getEmbededAsset(TrashAssets.TRASH_OVER);
+                  trashBoxText.htmlText = BroLocale.getInstance().getText('pearldeck.trash')
+                  trashBoxText.filters = getTextFilters(NavBar.FILTERS_OVER);
+               }
+               else if (_isTrashBoxRecovering || !_isPearlDraggedOverTrashBox){
+                  trashBoxImage.source = AssetsManager.getEmbededAsset(TrashAssets.RECOVER_PEARLS_OVER);
+                  trashBoxText.htmlText = BroLocale.getInstance().getText('pearldeck.trash.recycling')
+                  trashBoxText.filters = getTextFilters(NavBar.FILTERS_OVER);
+               }
+               else{
+                  trashBoxImage.source = AssetsManager.getEmbededAsset(TrashAssets.TRASH_OVER);
+                  trashBoxText.htmlText = BroLocale.getInstance().getText('pearldeck.trash')
+                  trashBoxText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+               }
+            }else {
+               if (ApplicationManager.getInstance().currentUser.isAnonymous()) {
+                  trashBoxImage.source = AssetsManager.getEmbededAsset(TrashAssets.TRASH);
+                  trashBoxText.htmlText = BroLocale.getInstance().getText('pearldeck.trash')
+                  trashBoxText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+               } else if (_isTrashBoxRecovering){
+                  trashBoxImage.source = AssetsManager.getEmbededAsset(TrashAssets.RECOVER_PEARLS);
+                  trashBoxText.htmlText = BroLocale.getInstance().getText('pearldeck.trash.recycling')
+                  trashBoxText.filters = getTextFilters(NavBar.FILTERS_OVER);
+               }
+               else{
+                  trashBoxImage.source = AssetsManager.getEmbededAsset(TrashAssets.TRASH);
+                  trashBoxText.htmlText = BroLocale.getInstance().getText('pearldeck.trash')
+                  trashBoxText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+               }
+            }
+         }
+         isOverTrashBoxChanged = false;
+      }
+      
+      public function set isPearlDraggedOverTrashBox(value:Boolean):void {
+         if(value != _isPearlDraggedOverTrashBox) {
+            _isPearlDraggedOverTrashBox = value;
+         }
+      }
+      public function get isPearlDraggedOverTrashBox():Boolean {
+         return _isPearlDraggedOverTrashBox;
+      }
+      
+      public function set isOverTrashBox(value:Boolean):void {
+         if(value != _isOverTrashBox) {
+            _isOverTrashBox = value;
+            isOverTrashBoxChanged = true;
+            invalidateProperties();
+         }
+      }
+      
+      public function isPointOverTrashBox(point:Point):Boolean {
+         isOverTrashBox = (trashBox && trashBox.visible && trashBox.hitTestPoint(point.x, point.y));
+         return _isOverTrashBox;
+      }
+      public function isPointOverDropZoneDeck(point:Point):Boolean {
+         var x:Number = point.x;
+         
+         if (ApplicationManager.getInstance().currentUser.isAnonymous()) {
+            
+            if (x < stage.width - (rightPartContainer ? rightPartContainer.width : 0)) {
+               x = dropZoneDeck.x + WIDTH + 5;
+            }
+         }
+         return (dropZoneDeck && dropZoneDeck.visible && dropZoneDeck.hitTestPoint(x, point.y));
+      }
+      
+      public function get isTrashBoxRecovering():Boolean {
+         return _isTrashBoxRecovering;
+      }
+      public function set isTrashBoxRecovering(value:Boolean):void {
+         if(value != _isTrashBoxRecovering){
+            _isTrashBoxRecovering = value;
+            isOverTrashBoxChanged = true;
+            invalidateProperties();
+         }
+      }
+      
+      private function onRollOverPearlWindowContainer():void {
+         _isOverPearlWindowContainer = true;
+         refreshPearlWindowContainer();
+      }
+      private function onRollOutPearlWindowContainer():void {
+         _isOverPearlWindowContainer = false;
+         refreshPearlWindowContainer();
+      }
+      
+      private function refreshPearlWindowContainer():void {
+         
+         if (_isOverPearlWindowContainer) {
+            pearlWindowImage.source = AssetsManager.getEmbededAsset(PearlDeckAssets.SHOW_DETAIL_OVER);
+            pearlWindowText.filters = getTextFilters(NavBar.FILTERS_OVER);
+         } else {
+            pearlWindowImage.source = AssetsManager.getEmbededAsset(PearlDeckAssets.SHOW_DETAIL);
+            pearlWindowText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+         }
+      }
+      
+      private function onRollOverImportContainer():void {
+         if(!_isImportEnabled) return;
+         importImage.source = getImportImageOverSource();
+         importText.filters = getTextFilters(NavBar.FILTERS_OVER);
+      }
+      
+      private function onRollOutImportContainer():void {
+         importImage.source = getImportImageSource();
+         importText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+      }
+      
+      private function onRollOverPearlerContainer():void {
+         if(!_isPearlerEnabled) return;
+         pearlerImage.source = getPearlerImageOverSource();
+         pearlerText.filters = getTextFilters(NavBar.FILTERS_OVER);
+      }
+      
+      private function onRollOutPearlerContainer():void {
+         pearlerImage.source = getPearlerImageSource();
+         pearlerText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+      }
+      
+      private function onRollOverInviteFriendContainer():void {
+         if(!_isInviteEnabled) return;
+         findFriendsImage.source = AssetsManager.getEmbededAsset(PearlDeckAssets.INVITE_FRIEND_OVER);
+         findFriendText.filters = getTextFilters(NavBar.FILTERS_OVER);
+      }
+      private function onRollOutInviteFriendContainer():void {
+         findFriendsImage.source = AssetsManager.getEmbededAsset(PearlDeckAssets.INVITE_FRIEND);
+         findFriendText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+      }
+      
+      private function onRollOverSocialSyncContainer():void {
+         if(!_isSocialSyncEnabled) return;
+         socialSyncImage.source = AssetsManager.getEmbededAsset(PearlDeckAssets.SOCIAL_SYNC_OVER);
+         socialSyncText.filters = getTextFilters(NavBar.FILTERS_OVER);
+      }
+      private function onRollOutSocialSyncContainer():void {
+         socialSyncImage.source = AssetsManager.getEmbededAsset(PearlDeckAssets.SOCIAL_SYNC);
+         socialSyncText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+      }
+      
+      private function onRollOverPremiumBox():void {
+         if(!_isPremiumEnabled) return;
+         premiumImage.source = AssetsManager.getEmbededAsset(PearlDeckAssets.PREMIUM_OVER);
+         premiumText.filters = getTextFilters(NavBar.FILTERS_OVER);
+      }
+      
+      private function onRollOutPremiumBox():void {
+         premiumImage.source = AssetsManager.getEmbededAsset(PearlDeckAssets.PREMIUM);
+         premiumText.filters = getTextFilters(NavBar.FILTERS_NOT_OVER);
+      }
+      
+      private function onRollOverTrash(event:MouseEvent):void {
+         if(_isTrashEnabled && !ApplicationManager.getInstance().currentUser.isAnonymous()) {
+            isOverTrashBox = true;
+         }
+      }
+      private function onRollOutTrash():void {
+         isOverTrashBox = false;
+      }
+      
+      private function set displayBanner(value:Boolean):void {
+         if(!_footerBanner && value) {
+            _footerBanner = new FooterBanner();
+            _footerBanner.bannerModel.addEventListener(FooterBannerModel.MODEL_CHANGE, onBannerModelChange);
+            var mainPanel:MainPanel = ApplicationManager.getInstance().components.mainPanel;
+            mainPanel.myWorld.addChild(_footerBanner);
+            
+         }
+         if (_footerBanner) {
+            _footerBanner.model.isVisible = false;
+         }
+         
+      }
+      
+      private function onBannerModelChange(event:Event):void {
+         if(_footerBanner.bannerModel.state != FooterBannerModel.STATE_DEFAULT) {
+            dropZoneDeck.deckModel.isTitleVisible = true;
+            
+         }
+      }
+
+      public function hidePearlWindowContainer():void {
+         if (pearlWindowContainer) {
+            pearlWindowContainer.visible = pearlWindowContainer.includeInLayout = false;
+         }
+      }
+      
+      public function isPointOverFooter(point:Point):Boolean {
+         return hitTestPoint(point.x, point.y);
+      }
+      public function get zoomModel():ZoomModel {
+         if(!_zoomModel) {
+            _zoomModel = ApplicationManager.getInstance().components.pearlTreeViewer.vgraph.zoomModel;
+         }
+         return _zoomModel;
+      }
+      
+      public function isDeckVisible():Boolean {
+         if (visible && _deckVisible) {
+            return true;
+         }
+         return false;
+      }
+      public function getImportImageSource():Class {
+         var cl:Class = ApplicationManager.getInstance().components.pearlbarInfo.isPearlbarInstalled() ?
+            PearlDeckAssets.IMPORT :
+            PearlDeckAssets.IMPORT_CYAN;
+         return AssetsManager.getEmbededAsset(cl);
+      }
+      public function getImportImageOverSource():Class {
+         var cl:Class = ApplicationManager.getInstance().components.pearlbarInfo.isPearlbarInstalled() ?
+            PearlDeckAssets.IMPORT_OVER :
+            PearlDeckAssets.IMPORT_CYAN_OVER;
+         return AssetsManager.getEmbededAsset(cl);
+      }
+      public function getPearlerImageSource():Class {
+         var cl:Class = ApplicationManager.getInstance().components.pearlbarInfo.isPearlbarInstalled() ?
+            PearlDeckAssets.PEARLER :
+            PearlDeckAssets.PEARLER_CYAN;
+         return AssetsManager.getEmbededAsset(cl);
+      }
+      public function getPearlerImageOverSource():Class {
+         var cl:Class = ApplicationManager.getInstance().components.pearlbarInfo.isPearlbarInstalled() ?
+            PearlDeckAssets.PEARLER_OVER :
+            PearlDeckAssets.PEARLER_CYAN_OVER;
+         return AssetsManager.getEmbededAsset(cl);
+      }
+      
+      public function onPearlerStatusChange():void {
+         updateActionsAvailable();
+      }
+
+   ]]></mx:Script>
+   
+</mx:Canvas>

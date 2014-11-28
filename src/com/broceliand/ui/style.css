@@ -1,0 +1,86 @@
+/* CSS file */
+
+@font-face {
+   src: url("PTArial.ttf");
+   fontFamily: PTArial;
+   advancedAntiAliasing: true;
+   unicodeRange: /* @see http://en.wikipedia.org/wiki/Unicode */
+      U+0020-U+024F, /* All Latin codes: 60ko */
+      U+20A0-U+20CF, /* Currency symbols: 5ko */
+      U+2018-U+2019, /* single quotation*/
+      U+201C-U+201D, /* double quotation*/
+      U+2022-U+2022, /* Char: • */
+      U+2026-U+2026, /* Char: ... */
+      U+2009-U+2009, /* thin Space */
+      U+202F-U+202F, /* NARROW NO-BREAK SPACE */
+      U+2605-U+2605;  /* black star */
+}
+@font-face {
+   src: url("PTArialBold.ttf");
+   fontFamily: PTArial;
+   font-weight: bold;
+   advancedAntiAliasing: true;
+   unicodeRange: /* @see http://en.wikipedia.org/wiki/Unicode */
+      U+0020-U+024F, /* All Latin codes: 60ko */
+      U+20A0-U+20CF, /* Currency symbols: 5ko */
+      U+2018-U+2019, /* single quotation*/
+      U+201C-U+201D, /* double quotation*/
+      U+2022-U+2022, /* Char: • */
+      U+2026-U+2026, /* Char: ... */
+      U+2009-U+2009, /* thin Space */
+      U+202F-U+202F, /* NARROW NO-BREAK SPACE */
+      U+2605-U+2605;  /* black star */
+}
+
+/* Asymmetric so it sticks to the right */
+.scrollBar {
+   upArrowSkin:           Embed(source="assets/scrollbar/upNote16.png"); 
+   upArrowUpSkin:         Embed(source="assets/scrollbar/upNote16.png");
+   upArrowOverSkin:       Embed(source="assets/scrollbar/upNoteHover16.png");
+   upArrowDownSkin:       Embed(source="assets/scrollbar/upNoteHover16.png");
+   upArrowDisabledSkin:   Embed(source="assets/scrollbar/upNote16.png");
+   
+   downArrowSkin:         Embed(source="assets/scrollbar/downNote16.png"); 
+   downArrowUpSkin:       Embed(source="assets/scrollbar/downNote16.png");
+   downArrowOverSkin:     Embed(source="assets/scrollbar/downNoteHover16.png");
+   downArrowDownSkin:     Embed(source="assets/scrollbar/downNoteHover16.png");   
+   downArrowDisabledSkin: Embed(source="assets/scrollbar/downNote16.png");   
+   
+   trackSkin: Embed(source="assets/scrollbar/scrollbarNoteBackgroundWhite16.png",
+      scaleGridLeft="9", scaleGridRight="10", scaleGridTop="27", scaleGridBottom="28");
+   thumbSkin: Embed(source="assets/scrollbar/scrollbarNoteForeground16.png",
+      scaleGridLeft="9", scaleGridRight="10", scaleGridTop="8", scaleGridBottom="9");
+}
+
+.scrollBarH {
+   upArrowSkin:           Embed(source="assets/scrollbar/upNote16.png"); 
+   upArrowUpSkin:         Embed(source="assets/scrollbar/upNote16.png");
+   upArrowOverSkin:       Embed(source="assets/scrollbar/upNoteHover16.png");
+   upArrowDownSkin:       Embed(source="assets/scrollbar/upNoteHover16.png");
+   upArrowDisabledSkin:   Embed(source="assets/scrollbar/upNote16.png");
+   
+   downArrowSkin:         Embed(source="assets/scrollbar/downNote16.png"); 
+   downArrowUpSkin:       Embed(source="assets/scrollbar/downNote16.png");
+   downArrowOverSkin:     Embed(source="assets/scrollbar/downNoteHover16.png");
+   downArrowDownSkin:     Embed(source="assets/scrollbar/downNoteHover16.png");   
+   downArrowDisabledSkin: Embed(source="assets/scrollbar/downNote16.png");   
+   
+   trackSkin: ClassReference(null);
+   thumbSkin: Embed(source="assets/scrollbar/scrollbarNoteForeground16.png",
+      scaleGridLeft="9", scaleGridRight="10", scaleGridTop="8", scaleGridBottom="9");
+}
+
+.scrollBarOnlyArrows {
+   upArrowSkin: Embed(source="assets/scrollbar/arrowUp.png");
+   upArrowUpSkin: Embed(source="assets/scrollbar/arrowUp.png");
+   upArrowOverSkin: Embed(source="assets/scrollbar/arrowUp.png");
+   upArrowDownSkin: Embed(source="assets/scrollbar/arrowUpOver.png");
+   upArrowDisabledSkin: Embed(source="assets/scrollbar/arrowUpDisabled.png");
+   downArrowSkin: Embed(source="assets/scrollbar/arrowDown.png"); 
+   downArrowUpSkin: Embed(source="assets/scrollbar/arrowDown.png");
+   downArrowOverSkin: Embed(source="assets/scrollbar/arrowDown.png");
+   downArrowDownSkin: Embed(source="assets/scrollbar/arrowDownOver.png");  
+   downArrowDisabledSkin: Embed(source="assets/scrollbar/arrowDownDisabled.png");
+   trackSkin: ClassReference(null);
+   thumbSkin: ClassReference(null);
+}

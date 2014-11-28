@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PearlComponentAddOn xmlns="com.broceliand.ui.pearlTree.*" xmlns:mx="http://www.adobe.com/2006/mxml"  
+                     height="40" horizontalScrollPolicy="off" x="900" y ="212" xmlns:text="flash.text.*" verticalScrollPolicy="off">
+   
+   <mx:Label id="label1" text="{line1}" selectable="false" color="#000000" fontSize="10"  fontWeight="bold" textAlign="center" width="50" />
+   <mx:Label id="label2" selectable="false" text="{line2}" color="#000000" fontSize="10"  fontWeight="bold" y="12" textAlign="center"  width="50"/>
+   <mx:Script>
+      <![CDATA[
+         import com.broceliand.ApplicationManager;
+         import com.broceliand.graphLayout.controller.GraphicalAnimationRequestProcessor;
+         import com.broceliand.graphLayout.model.EdgeData;
+         import com.broceliand.graphLayout.model.EndNode;
+         import com.broceliand.graphLayout.model.IPTNode;
+         import com.broceliand.graphLayout.model.PTRootNode;
+         import com.broceliand.graphLayout.visual.IPTVisualNode;
+         import com.broceliand.pearlTree.model.BroPTNode;
+         import com.broceliand.pearlTree.model.BroPearlTree;
+         import com.broceliand.pearlTree.navigation.INavigationManager;
+         import com.broceliand.pearlTree.navigation.NavigationEvent;
+         import com.broceliand.ui.pearl.IUIPearl;
+         import com.broceliand.ui.pearl.UICenterPTWPearl;
+         import com.broceliand.ui.pearl.UIPearl;
+         import com.broceliand.ui.renderers.pageRenderers.PearlRendererBase;
+         import com.broceliand.ui.util.ColorPalette;
+         import com.broceliand.util.BroLocale;
+         
+         import mx.core.Application;
+         import mx.core.IUIComponent;
+         import mx.core.UIComponent;
+         
+         import org.un.cava.birdeye.ravis.graphLayout.data.IEdge;
+         import org.un.cava.birdeye.ravis.utils.events.VNodeMouseEvent;
+         
+         private var _stage:EventDispatcher;
+         private var _lastEdgeData:EdgeData;
+         private var _disappearOnNextAction:Boolean = false;
+         private var _ignoreNextNavigationEvent:Boolean;
+
+         private var _showPrivateTree:Boolean = false;
+         [Bindable]
+         private var line1:String;
+         [Bindable]
+         private var line2:String;
+         
+         override protected function resourcesChanged():void{
+            if (!_showPrivateTree) {
+               if (BroLocale.languageIsFrench()) {
+                  line1 = BroLocale.getText('pearl.pearltree');
+                  line2 = BroLocale.getText('pearl.emptyTreeText')
+               } else {
+                  line1 = BroLocale.getText('pearl.emptyTreeText'); 
+                  line2 = BroLocale.getText('pearl.pearltree');
+               }
+            } else {
+               if (BroLocale.languageIsFrench()) {
+                  line1 = BroLocale.getText('pearl.pearltree');
+                  line2 = BroLocale.getText('pearl.privateTreeText')
+               } else {
+                  line1 = BroLocale.getText('pearl.privateTreeText'); 
+                  line2 = BroLocale.getText('pearl.pearltree');
+               }
+            }
+         }
+         
+         private function disappearOnNextAction():void {
+            if (!_disappearOnNextAction) {
+               _disappearOnNextAction = true;
+               if (stage) {
+                  stage.addEventListener(MouseEvent.MOUSE_DOWN, hideOnEvent);
+                  stage.addEventListener(KeyboardEvent.KEY_DOWN, hideOnEvent);
+                  _stage = stage;
+               }
+               ApplicationManager.getInstance().visualModel.navigationModel.addEventListener(NavigationEvent.NAVIGATION_EVENT,hideOnEvent);
+            }
+         }
+         override protected function createChildren():void {
+            super.createChildren();
+
+         }
+         
+         private function hideOnEvent(event:Event):void {
+            if (_ignoreNextNavigationEvent) {
+               _ignoreNextNavigationEvent = false;
+               return;
+            }
+            var pearlUnderCursor:IUIPearl = ApplicationManager.getInstance().components.pearlTreeViewer.interactorManager.pearlRendererUnderCursor;
+            if (pearlUnderCursor && pearlUnderCursor.node == node) {
+               if (event is MouseEvent) {
+                  var p:Point = new Point(MouseEvent(event).stageX, MouseEvent(event).stageY); 
+                  if (!ApplicationManager.getInstance().components.pearlTreeViewer.vgraph.controls.isPointOverPearlButton(p)) {
+                     return;
+                  } 
+               } else {
+                  return;
+               }
+            }
+            hide();
+            if (_disappearOnNextAction) {
+               _disappearOnNextAction = false;
+               if (_stage) {
+                  _stage.removeEventListener(MouseEvent.MOUSE_DOWN, hideOnEvent);
+                  _stage.removeEventListener(KeyboardEvent.KEY_DOWN, hideOnEvent);
+                  _stage = null;
+               }
+               ApplicationManager.getInstance().visualModel.navigationModel.removeEventListener(NavigationEvent.NAVIGATION_EVENT,hideOnEvent);
+            }
+            
+         }
+         
+         public function hide():void {
+            visible = false;    
+            bindToNode(null);
+         }
+         private function hideTitleFromNode( node:IPTNode, hide:Boolean):void {
+            var rootNode:PTRootNode = node as PTRootNode;
+            if (rootNode && rootNode.renderer) {
+               rootNode.renderer.hideTitleToDisplayInfo(hide);
+               var endNode:IPTNode= rootNode.containedPearlTreeModel.endNode;
+               if (endNode && endNode.renderer) {
+                  endNode.renderer.hideTitleToDisplayInfo(hide);
+               }  
+            }
+         }       
+         
+         private function updatePrivate(node:IPTNode):void {
+            if (node) {
+               var bnode:BroPTNode = node.getBusinessNode();
+               if (bnode && bnode.owner) {
+                  var tree:BroPearlTree = bnode.owner;
+                  if (tree && !tree.isCurrentUserAuthor() && tree.isPrivate()) {
+                     isPrivateTree = true;
+                     return;
+                  } 
+               }
+            }
+            isPrivateTree = false;
+         }
+         
+         override  protected function getUIComponentFromNode(node:IPTNode,uiComponent:UIComponent=null):UIComponent {
+            if (node && node.getBusinessNode().owner== ApplicationManager.getInstance().visualModel.navigationModel.getFocusedTree()) {
+               return null;
+            }
+            updatePrivate(node);
+            makeLastLinkInvisible(node);
+            
+            disappearOnNextAction();
+            var component:IUIPearl= super.getUIComponentFromNode(node) as IUIPearl;
+            if (component) {
+               hideTitleFromNode(node, true);
+            }
+            return component as UIComponent;
+         }
+         private function makeLastLinkInvisible(node:IPTNode):void {
+            if (node && node.successors.length>0) {
+               var lastEdge:IEdge= node.outEdges[node.outEdges.length-1];
+               _lastEdgeData =(lastEdge.data as EdgeData);
+               _lastEdgeData.visible = false;
+               node.vnode.vgraph.refresh();
+            }
+         }
+         override protected function clear():void  {
+            hideTitleFromNode(_node, false);
+            if (_lastEdgeData) {
+               _lastEdgeData.visible=true;
+               _lastEdgeData=null;
+               ApplicationManager.getInstance().components.pearlTreeViewer.vgraph.refresh();
+            }
+            super.clear()
+         }        
+         override protected function updateTargetComponentPosition(point:Point):void{
+            var center1:Point;
+            var center2:Point;
+
+            if (_node && _node.vnode && _node.vnode.view) {
+               center1 = _node.vnode.viewCenter
+               var endNode:IPTNode;
+               if (_node.successors.length>0) {
+                  endNode = _node.successors[_node.successors.length-1];
+                  if (endNode  && endNode.vnode.view) {
+                     
+                     center2 = endNode.vnode.viewCenter; 
+                     point.x = (0.4* center1.x+ 0.6 *center2.x) - 27 * scaleX
+                     point.y = (0.4 * center1.y+ 0.6* center2.y) -17 * scaleY;
+                  }
+               }
+            }
+
+         }
+         
+         private function set isPrivateTree(isPrivate:Boolean):void {
+            if (_showPrivateTree != isPrivate) {
+               _showPrivateTree = isPrivate;
+               resourcesChanged();
+            }
+         }
+         public function set ignoreNextNavigationEvent (value:Boolean):void
+         {
+            _ignoreNextNavigationEvent = value;
+         }
+         
+         public function get ignoreNextNavigationEvent ():Boolean
+         {
+            return _ignoreNextNavigationEvent;
+         }
+         override protected function updateScale():void {
+            var endNode:IPTNode;
+            if (_node.successors.length>0) {
+               endNode = _node.successors[_node.successors.length-1];
+               if (endNode && endNode.vnode.view) {
+                  scaleX = endNode.vnode.view.scaleX;
+                  scaleY = scaleX;
+                  return;
+               }
+            }
+            super.updateScale();
+         }
+
+      ]]>
+   </mx:Script>
+</PearlComponentAddOn >
